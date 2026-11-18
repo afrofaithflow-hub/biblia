@@ -727,3 +727,15 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - `npm.cmd run build` executado e aprovado com **Exit Code 0** (202 módulos, zero erros de compilação).
   - Servidor de desenvolvimento mantido ativo na porta 5173 com Hot Module Replacement (HMR) funcional.
 - **Assinatura:** Antigravity AI Engine — 17 de Novembro de 2026, 23:13 (Africa/Maputo).
+
+
+### 18/11/2026 — 14:00 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Inicialização Git, Configuração Vercel e Conexão ao Repositório GitHub
+- **Inicialização e Higiene Git:**
+  - Criado `.gitignore` canónico protegendo `node_modules/`, `dist/`, arquivos `.env*`, `.tsbuildinfo` e temporários de protótipos/importação (`tmp-blivre-import/`, `prototipo2.1/`).
+  - Criado `vercel.json` com regra de reescrita SPA (`{"source": "/(.*)", "destination": "/index.html"}`) e framework Vite para garantir deploy e roteamento móvel sem falhas no Vercel.
+  - Repositório Git inicializado em branch `main`, com commit raiz `589edea` ("feat: BiblIA 2.1 — Jornadas Gamificadas, Leitor BLIVRE, Motor de Áudio e Assistente Teológico").
+  - Remote configurado para `https://github.com/afrofaithflow-hub/biblia.git`.
+- **Diagnóstico de Permissão do Push:**
+  - Ao executar `git push -u origin main`, o Git Credential Manager do sistema reportou erro 403: a conta atualmente autenticada na máquina (`digitafrika-coder`) não possui permissão de escrita no repositório da organização `afrofaithflow-hub/biblia`.
+  - Apresentadas opções imediatas ao utilizador (adicionar `digitafrika-coder` como colaborador no repositório ou fornecer Personal Access Token de `afrofaithflow-hub`).
+- **Assinatura:** Antigravity AI Engine — 18 de Novembro de 2026, 14:00 (Africa/Maputo).
