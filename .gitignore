@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+dist/
+dist-ssr/
+
+# Build artifacts & caches
+*.tsbuildinfo
+.eslintcache
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Temporary import archives and unpacked data
+tmp-blivre-import/
+prototipo2.1/
+scratch/
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

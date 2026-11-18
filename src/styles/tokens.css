@@ -1,0 +1,144 @@
+/* ==========================================================================
+   BiblIA Devotional & Game — Design Tokens (Stitch Canonical Standard)
+   Modo Claro (:root) e Modo Noturno (.dark / [data-theme="dark"])
+   ========================================================================== */
+
+:root {
+  /* ==========================================================================
+     PALETA CROMÁTICA — VERDE SAGRADO (TEAL BRAND)
+     ========================================================================== */
+  --color-sacred-deep: #13433e;         /* Fundo escuro, badges solenes, contrastes altos */
+  --color-sacred-dark: #15453f;         /* Headers escuros e seções de destaque */
+  --color-sacred-brand: #1d5d55;        /* Ação primária, header principal, CTA devocional */
+  --color-sacred-soft: #2a7a70;         /* Hover de cards secundários, ícones ativos */
+  --color-sacred-light: #e6f4f1;        /* Fundos de badges sutis, pills ativos */
+  --color-sacred-glow: rgba(29, 93, 85, 0.25);
+
+  /* ==========================================================================
+     GAMIFICAÇÃO & ENERGIA (ESTILO DUOLINGO BÍBLICO)
+     ========================================================================== */
+  --color-gold-talent: #d97706;         /* Moedas bíblicas de Talento, XP, destaques */
+  --color-gold-radiant: #f59e0b;        /* Estrelas, troféus, botões de recompensa */
+  --color-gold-light: #fef3c7;          /* Fundos de tags de XP e avisos de bônus */
+  --color-streak-flame: #ea580c;        /* Fogo/chama de dias consecutivos */
+  --color-streak-light: #ffedd5;        /* Fundo de pill do streak */
+  --color-heart-lives: #ef4444;         /* Contador de vidas do quiz */
+  --color-heart-light: #fee2e2;         /* Fundo do pill de corações */
+
+  /* ==========================================================================
+     FEEDBACK & STATUS DE QUIZ
+     ========================================================================== */
+  --color-quiz-correct: #10b981;        /* Feedback de acerto (borda e fundo) */
+  --color-quiz-correct-bg: #ecfdf5;     /* Fundo suave do card correto */
+  --color-quiz-error: #ef4444;          /* Erro / resposta incorreta */
+  --color-quiz-error-bg: #fef2f2;       /* Fundo suave do card incorreto */
+
+  /* ==========================================================================
+     SUPERFÍCIES, BORDAS & NEUTROS
+     ========================================================================== */
+  --color-bg-canvas: #f8fafc;           /* Fundo sereno principal do app */
+  --color-surface-card: #ffffff;        /* Cards, bottom sheets e modais */
+  --color-surface-subtle: #f1f5f9;      /* Fundos de inputs, chips neutros */
+  --color-border-subtle: #e2e8f0;       /* Divisórias suaves e bordas neutras */
+  --color-border-focus: #1d5d55;        /* Borda de foco para acessibilidade */
+
+  /* ==========================================================================
+     TIPOGRAFIA & CONTRASTE
+     ========================================================================== */
+  --color-text-main: #0f172a;           /* Títulos, labels primários, leitura forte */
+  --color-text-muted: #475569;          /* Subtítulos, metadados, instruções */
+  --color-text-inverse: #ffffff;        /* Texto em botões coloridos e cards escuros */
+
+  /* ==========================================================================
+     FONT FAMILIES (BIMODAL)
+     ========================================================================== */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Newsreader', 'Playfair Display', Georgia, Cambria, 'Times New Roman', serif;
+  --font-scripture: 'Newsreader', Georgia, serif;
+
+  /* ==========================================================================
+     BORDER RADIUS (SISTEMA DE BORDAS)
+     ========================================================================== */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;                    /* Padrão para cards e caixas de quiz */
+  --radius-xl: 20px;                    /* Modais e cartões de destaque */
+  --radius-2xl: 24px;                   /* Bottom navigation bar e sheets */
+  --radius-pill: 9999px;                /* Badges, botões arredondados e avatares */
+
+  /* ==========================================================================
+     SOMBRAS & ELEVAÇÃO TÁTIL
+     ========================================================================== */
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-floating: 0 10px 25px -5px rgba(29, 93, 85, 0.25), 0 8px 10px -6px rgba(29, 93, 85, 0.2);
+  --shadow-tactile-duo: 0 4px 0px #0e302c; /* Chanfro inferior tátil do botão Duolingo */
+  --shadow-tactile-gold: 0 4px 0px #b45309; /* Chanfro do botão de recompensa */
+
+  /* ==========================================================================
+     ESPECIFICAÇÕES DA BOTTOM NAV BAR
+     ========================================================================== */
+  --nav-bar-height: 72px;
+  --nav-center-btn-size: 54px;
+}
+
+/* ==========================================================================
+   MODO NOTURNO (SACRED OBSIDIAN & NEON TEAL)
+   ========================================================================== */
+:root[data-theme="dark"],
+.dark {
+  --color-sacred-bg-canvas: #081413;       /* Fundo místico principal (Obsidian Canvas) */
+  --color-sacred-card-base: #112321;       /* Superfície padrão de cartões e modais */
+  --color-sacred-card-hover: #162f2c;      /* Superfície elevada / hover de cards */
+  --color-sacred-card-deep: #04100f;       /* Fundos mais profundos e sub-containers */
+  
+  --color-sacred-border-subtle: #1a3330;   /* Divisórias refinadas e contornos neutros */
+  --color-sacred-border-focus: #2dd4bf;    /* Foco de acessibilidade e destaque ativo */
+  
+  --color-sacred-brand-primary: #2dd4bf;   /* Teal Sagrado Neon / Menta para ações e ênfase */
+  --color-sacred-brand-dark: #13433e;      /* Base de botões e preenchimentos secundários */
+  --color-sacred-brand-deep: #0b221f;      /* Sombras e chanfros inferiores de botões */
+  --color-sacred-brand-glow: rgba(45, 212, 191, 0.25); /* Halo luminescente noturno */
+
+  /* Gamificação Noturna */
+  --color-gold-talent: #f59e0b;            /* Moedas bíblicas de Talento / XP noturno */
+  --color-gold-radiant: #fbbf24;           /* Estrelas, troféus e botão de recompensa */
+  --color-gold-depth: #92400e;             /* Chanfro 3D inferior para botões de ouro */
+  --color-gold-dark-pill: #2a1e0b;         /* Fundo com baixo brilho para tags de XP */
+  
+  --color-streak-flame: #ea580c;           /* Chama de dias consecutivos */
+  --color-streak-glow: #f97316;            /* Realce de streak */
+  --color-streak-dark-pill: #2b1308;       /* Fundo da tag de dias consecutivos */
+  
+  --color-heart-lives: #f87171;            /* Contador de vidas do quiz */
+  --color-heart-dark-pill: #2d1010;        /* Fundo de vidas no modo escuro */
+
+  /* Feedback & Status Noturno */
+  --color-quiz-correct: #34d399;           /* Feedback de acerto (alta legibilidade) */
+  --color-quiz-correct-bg: #062b23;        /* Fundo suave do card correto */
+  --color-quiz-correct-border: #059669;    /* Borda acentuada de acerto */
+  --color-quiz-error: #f87171;             /* Resposta incorreta */
+  --color-quiz-error-bg: #2d1214;          /* Fundo suave do card incorreto */
+  --color-quiz-error-border: #dc2626;      /* Borda do card de erro */
+
+  /* Tipografia Noturna */
+  --color-text-primary: #f1f5f9;           /* Títulos, labels primários */
+  --color-text-secondary: #94a3b8;         /* Subtítulos e instruções */
+  --color-text-muted: #64748b;             /* Legendas discretas */
+  --color-text-scripture: #e2e8f0;         /* Texto canônico de versículos */
+  --color-text-scripture-highlight: #5eead4; /* Palavras em destaque */
+
+  /* Sombras & Elevação Noturna */
+  --shadow-dark-subtle: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-dark-card: 0 4px 20px -2px rgba(0, 0, 0, 0.6), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-dark-glow-teal: 0 0 24px -4px rgba(45, 212, 191, 0.35);
+  --shadow-dark-glow-gold: 0 0 20px -4px rgba(245, 158, 11, 0.3);
+  --shadow-tactile-duo-dark: 0 4px 0px #0b221f; /* Chanfro inferior 3D noturno */
+  --shadow-tactile-gold-dark: 0 4px 0px #78350f; /* Chanfro do botão de recompensa */
+
+  /* Bottom Navigation Bar Noturna */
+  --nav-bg-dark: rgba(17, 35, 33, 0.92);
+  --nav-border-dark: rgba(42, 74, 70, 0.5);
+}
+

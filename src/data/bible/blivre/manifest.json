@@ -1,0 +1,39 @@
+{
+  "translationId": "blivre",
+  "title": "Bíblia Livre",
+  "abbreviation": "BL",
+  "language": "Português",
+  "dialect": "Brasil",
+  "edition": "Textus Receptus",
+  "sourceId": "porbr2018",
+  "sourceUrl": "https://www.ebible.org/details.php?id=porbr2018",
+  "sourcePackageUrl": "https://ebible.org/Scriptures/porbr2018_usfm.zip",
+  "distributionPackageUrl": "https://biblepath-site.vercel.app/downloads/biblepath-blivre-cc-by-4.0.zip",
+  "distributionPackageSha256": "C9EA4BEEC2B0596D5964C81BD31A899DDFD99C3F962520639F1826B88AEA7B98",
+  "acquiredAt": "2026-11-17T20:48:35+02:00",
+  "sourceGeneratedAt": "2026-08-08",
+  "sourceFilesDate": "2025-12-12",
+  "copyright": "© 2018 Diego Santos, Mario Sérgio e Marco Teles",
+  "license": {
+    "name": "Creative Commons Atribuição 4.0 Brasil (CC BY 4.0)",
+    "url": "https://creativecommons.org/licenses/by/4.0/br/"
+  },
+  "attribution": "Bíblia Livre (BLIVRE), Copyright © Diego Santos, Mario Sérgio e Marco Teles, http://sites.google.com/site/biblialivre/ - fevereiro de 2018. Licença Creative Commons Atribuição 4.0 (https://creativecommons.org/licenses/by/4.0/). Formatada para o BiblePath: notas, títulos de seção e marcações removidos; espaçamento e pontuação corrigidos.",
+  "changesFromSource": [
+    "Notas de rodapé, referências cruzadas, títulos de secção e marcação foram removidos.",
+    "Espaçamento e pontuação foram corrigidos.",
+    "Algumas divisões de versículo foram corrigidas.",
+    "Atos 17:24: erro tipográfico 'tempos' foi corrigido para 'templos', conforme declarado pelo distribuidor."
+  ],
+  "technicalValidation": {
+    "books": 66,
+    "chapters": 1189,
+    "verseSlots": 31102,
+    "emptyVerseSlots": 0,
+    "bookChapterCountsMatchCanonicalCatalog": true
+  },
+  "editorialReview": {
+    "status": "pending",
+    "note": "O conteúdo e a proveniência do pacote foram tecnicamente conferidos; revisão editorial por leitores/revisores do público moçambicano ainda necessária."
+  }
+}
