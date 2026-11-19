@@ -800,3 +800,13 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Adoção do Stripe como provedor global de subscrição; manutenção dos valores do PRD (US$ 1,49 PREMIUM / US$ 2,99 MASTER); período de graça de 3 dias em falha de cartão.
 - **Estado:** 📋 Plano Estruturado em Ficheiro Próprio; aguarda aprovação do utilizador para início da Fase 5.1.
 - **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 00:33 (Africa/Maputo).
+
+
+### 20/11/2026 — 00:37 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Execução Concluída da Fase 5.1: Migração de Pagamentos e Idempotência
+- **Migração SQL Segura (`supabase/migrations/20261120000001_payment_and_subscriptions.sql`):**
+  - Criada a tabela `payment_webhook_events` com chave única no `event_id` para garantir idempotência estrita (evitando cobrança ou ativação duplicada).
+  - Estruturada a tabela `subscriptions` com campos para provedor real (`external_customer_id`, `external_subscription_id`, `provider = 'stripe'`).
+  - Configurado bloqueio RLS rigoroso: clientes anónimos e autenticados possuem apenas permissão de leitura (`SELECT`) da própria assinatura; mutações diretas via frontend (`INSERT`, `UPDATE`, `DELETE`) foram completamente revogadas.
+  - Implementada a função PL/pgSQL transacional `apply_subscription_event` com execução restrita à `service_role`. A função gere atomicamente a máquina de estados (ativação, cancelamento agendado com manutenção do acesso até `current_period_end` e expiração pacífica para o plano FREE).
+- **Validação de Build:** `npm.cmd run build` executado e aprovado com **Exit Code 0** (200 módulos transformados, zero erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 00:37 (Africa/Maputo).
