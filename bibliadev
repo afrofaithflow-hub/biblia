@@ -739,3 +739,11 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Ao executar `git push -u origin main`, o Git Credential Manager do sistema reportou erro 403: a conta atualmente autenticada na máquina (`digitafrika-coder`) não possui permissão de escrita no repositório da organização `afrofaithflow-hub/biblia`.
   - Apresentadas opções imediatas ao utilizador (adicionar `digitafrika-coder` como colaborador no repositório ou fornecer Personal Access Token de `afrofaithflow-hub`).
 - **Assinatura:** Antigravity AI Engine — 18 de Novembro de 2026, 14:00 (Africa/Maputo).
+
+
+### 19/11/2026 — 23:45 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Correção de Sintaxe SQL Reservada e Auto-Contenção da Migração do Assistente Teológico
+- **Correção de Palavra Reservada PostgreSQL (`supabase/migrations/20261117000003_ai_assistant_foundation.sql`):**
+  - A coluna `references` em `ai_messages` causava erro `42601: syntax error at or near "references"` por ser palavra-chave ANSI SQL (utilizada para foreign keys). Corrigido para `"references" JSONB NOT NULL DEFAULT '[]'::jsonb`.
+  - Adicionado `CREATE TABLE IF NOT EXISTS public.profiles` de forma defensiva para evitar erro de integridade referencial caso a tabela de perfis ainda não estivesse criada no projeto Supabase.
+- **Validação de Build:** `npm.cmd run build` executado e aprovado com **Exit Code 0** (202 módulos, zero erros de compilação).
+- **Assinatura:** Antigravity AI Engine — 19 de Novembro de 2026, 23:45 (Africa/Maputo).

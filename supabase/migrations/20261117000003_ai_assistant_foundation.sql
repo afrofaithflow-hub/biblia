@@ -3,6 +3,17 @@
 -- Conversas privadas, quota diária atómica e auditoria sem guardar a pergunta.
 -- =============================================================================
 
+-- Garante existência da tabela profiles para integridade referencial
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
+  display_name TEXT DEFAULT 'Discípulo da Palavra',
+  avatar_url TEXT,
+  plan_tier INT NOT NULL DEFAULT 0 CHECK (plan_tier IN (0, 1, 2)),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS public.ai_conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -21,7 +32,7 @@ CREATE TABLE IF NOT EXISTS public.ai_messages (
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
   content TEXT NOT NULL CHECK (char_length(content) BETWEEN 1 AND 6000),
   kind TEXT CHECK (kind IN ('study', 'devotional', 'prayer', 'clarification')),
-  references JSONB NOT NULL DEFAULT '[]'::jsonb,
+  "references" JSONB NOT NULL DEFAULT '[]'::jsonb,
   interpretation_note TEXT,
   safety_note TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
