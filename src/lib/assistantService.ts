@@ -73,7 +73,8 @@ export async function askAssistant(question: string, conversationId?: string): P
   const readingContext: ReadingContext | undefined = lastRead.book && Number.isInteger(lastRead.chapter) && Number.isInteger(lastRead.verse)
     ? { book: lastRead.book, chapter: lastRead.chapter, verse: lastRead.verse }
     : undefined;
-  const { data, error } = await supabase.functions.invoke<AssistantReply>('theological-assistant', {
+  const functionName = (import.meta.env.VITE_ASSISTANT_FUNCTION_NAME as string) || 'bright-processor';
+  const { data, error } = await supabase.functions.invoke<AssistantReply>(functionName, {
     body: { question, conversationId, readingContext },
   });
 

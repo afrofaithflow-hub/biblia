@@ -693,6 +693,17 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
 - **Próximos passos:** criar o pacote canónico mínimo para a função e a matriz de testes teológicos; em seguida executar o teste ponta a ponta após os segredos serem configurados.
 - **Assinatura:** Codex — 17 de Novembro de 2026, 23:05 (Africa/Maputo).
 
+### 20/11/2026 — 00:17 (Africa/Maputo) — Assinatura: Codex — Correção da sessão híbrida e integridade da jornada
+
+- **Lacunas (`FillBlanksExercise.tsx`):** o banco de palavras agora é embaralhado uma vez por questão e permanece estável durante a tentativa. As respostas corretas deixaram de ser apresentadas na sequência do versículo.
+- **Temporizador unificado (`gameTiming.ts`, `GameLessonHost.tsx`, `useGameSession.ts`):** todas as questões da lição híbrida recebem contador visível e acessível. Os tempos são proporcionais ao tipo e à dificuldade: V/F 15–24 s, múltipla escolha 22–34 s e lacunas 32–50 s. O relógio pausa quando a app fica em segundo plano; ao terminar, a questão é registada como erro normal para revisão espaçada, sem regra paralela.
+- **Experiência da jornada (`GameDashboard.tsx`, `App.tsx`, `GameStats.tsx`):** removido o menu que deixava a pessoa escolher modalidade. O painel explica que a fase alterna exercícios automaticamente; inclusive caminhos legados agora passam pelo anfitrião de lições e recebem as mesmas regras de tempo, vida, dica e feedback.
+- **Falha estrutural corrigida (`gameJourney.ts`, `GameDashboard.tsx`, `LevelSelectionScreen.tsx`):** eliminada a segunda lista desatualizada de mundos/fases, cujos IDs eram incompatíveis com as fases executadas. Conclusão, estrelas, desbloqueio, painel e seleção agora usam a mesma fonte canónica. Estados locais do protótipo são migrados por número de fase; novos percursos iniciam sem progresso fictício.
+- **Build:** `npm.cmd run build` passou — TypeScript e Vite, 200 módulos, sem erros.
+- **Em falta:** revisão espaçada ainda inicia um banco genérico de V/F em vez de selecionar as perguntas que falharam; o temporizador precisa de ensaio humano em aparelhos móveis reais; o conteúdo das fases 2–7 ainda precisa ser expandido e revisto biblicamente antes de lançamento.
+- **Próximos passos:** transformar a revisão espaçada numa sessão composta pelas perguntas pendentes, persistir tempo esgotado no registo de tentativa e validar em telemóvel o equilíbrio dos tempos antes de congelar a mecânica.
+- **Assinatura:** Codex — 20 de Novembro de 2026, 00:17 (Africa/Maputo).
+
 
 ### 17/11/2026 — 23:03 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Execução Concluída das Fases 1 a 4 do Plano de Melhorias do Jogo
 - **Fase 1 (Embaralhamento / Anti-Previsibilidade):**
@@ -747,3 +758,15 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Adicionado `CREATE TABLE IF NOT EXISTS public.profiles` de forma defensiva para evitar erro de integridade referencial caso a tabela de perfis ainda não estivesse criada no projeto Supabase.
 - **Validação de Build:** `npm.cmd run build` executado e aprovado com **Exit Code 0** (202 módulos, zero erros de compilação).
 - **Assinatura:** Antigravity AI Engine — 19 de Novembro de 2026, 23:45 (Africa/Maputo).
+
+
+### 20/11/2026 — 00:25 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Conexão Supabase Real e Roteamento da Edge Function do Assistente Teológico
+- **Conexão Real do Backend Supabase:**
+  - Configurado arquivo `.env` com `VITE_SUPABASE_URL=https://raeydbmvlzacilshsnbj.supabase.co` e `VITE_SUPABASE_ANON_KEY` fornecidos pelo utilizador.
+  - O estado de sandbox simulado foi encerrado; o cliente agora conecta-se e autentica contra a instância de produção do Supabase.
+- **Roteamento da Edge Function:**
+  - Identificada a publicação da Edge Function sob o identificador `bright-processor`.
+  - Atualizado `src/lib/assistantService.ts` para suportar dinamicamente `VITE_ASSISTANT_FUNCTION_NAME` com fallback para `bright-processor`.
+  - Verificada a resposta HTTP da função via probe em runtime (status 401 `Missing authorization header` confirmando que a função está ativa, ouvindo e protegida).
+- **Validação de Build:** `npm.cmd run build` executado e aprovado com **Exit Code 0** (200 módulos, zero erros de compilação).
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 00:25 (Africa/Maputo).
