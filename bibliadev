@@ -704,6 +704,15 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
 - **Próximos passos:** transformar a revisão espaçada numa sessão composta pelas perguntas pendentes, persistir tempo esgotado no registo de tentativa e validar em telemóvel o equilíbrio dos tempos antes de congelar a mecânica.
 - **Assinatura:** Codex — 20 de Novembro de 2026, 00:17 (Africa/Maputo).
 
+### 20/11/2026 — 00:27 (Africa/Maputo) — Assinatura: Codex — Plano da Fase de Dados Reais e Contas Opcionais
+
+- **Artefacto:** criado `PLANO_FASE_DADOS_REAIS_E_CONTAS.md`, que reúne a remoção de mocks, Supabase/RLS, visitante local, migração idempotente de progresso, Google, e-mail por OTP, sincronização offline-first e convites por link/QR/partilha.
+- **Decisão de produto:** conta não será obrigatória ao baixar a app. O visitante pode usar BiblIA localmente; a conta é pedida para guardar, sincronizar, competir ou criar relações sociais. Google e OTP por e-mail são os métodos iniciais; Apple entra antes da distribuição iOS. Facebook fica apenas como canal de partilha de convite.
+- **Portas de saída:** o plano exige que dados de visitante sejam migrados sem duplicar recompensas, que RLS isole utilizadores e que nenhum ecrã apresente valor simulado como dado real.
+- **Estado:** plano criado; nenhuma migração, conta ou API foi configurada nesta entrada.
+- **Próximos passos:** iniciar D0 com inventário de mocks e fontes de dados; em seguida criar/ligar projeto Supabase e aplicar o schema revisto.
+- **Assinatura:** Codex — 20 de Novembro de 2026, 00:27 (Africa/Maputo).
+
 
 ### 17/11/2026 — 23:03 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Execução Concluída das Fases 1 a 4 do Plano de Melhorias do Jogo
 - **Fase 1 (Embaralhamento / Anti-Previsibilidade):**
@@ -770,3 +779,24 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Verificada a resposta HTTP da função via probe em runtime (status 401 `Missing authorization header` confirmando que a função está ativa, ouvindo e protegida).
 - **Validação de Build:** `npm.cmd run build` executado e aprovado com **Exit Code 0** (200 módulos, zero erros de compilação).
 - **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 00:25 (Africa/Maputo).
+
+### 20/11/2026 — 00:27 (Africa/Maputo) — Assinatura: Codex — Plano da Fase de Dados Reais e Contas Opcionais
+- **Artefacto criado:** `PLANO_FASE_DADOS_REAIS_E_CONTAS.md`, com o plano integral D0–D5 para remover mocks, configurar dados reais, preservar o modo visitante local, migrar dados ao criar conta, autenticar por Google/OTP e criar convites por link/QR.
+- **Decisões fixadas:** conta não é obrigatória; não usar utilizador anónimo no servidor nesta fase; Facebook serve apenas para partilhar convites, não para autenticar nem importar contactos; XP e progressão serão calculados e validados pelo servidor.
+- **Estado:** planeamento concluído; nenhuma alteração de produto, esquema ou dados foi executada nesta entrada.
+- **Próxima ação:** iniciar D0, inventariar cada mock e substituir cada caminho por estado real de carregamento, vazio, offline ou erro.
+- **Assinatura:** Codex — 20 de Novembro de 2026, 00:27 (Africa/Maputo).
+
+
+### 20/11/2026 — 00:33 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Plano de Execução da Secção 5: Membresia e Assinaturas Reais
+- **Auditoria de Pagamentos e Segurança:**
+  - Identificado que o frontend atual permite mutação client-side de `profiles.plan_tier` via `activatePlan(tier)`, sem validação transacional de cobrança.
+  - O simulador `WebhookSimulatorDrawer.tsx` opera localmente sem assinatura criptográfica de gateway.
+- **Artefactos e Planos Estruturados:**
+  - Criado `PLANO_SECCAO_5_PAGAMENTOS_E_MEMBRESIA.md` e registado artefacto correspondente.
+  - Arquitetada a máquina de estados completa de subscrição (`active`, `past_due`, `cancelled`, `expired`), garantindo reversão pacífica para o plano FREE (sem perda de acesso aos 66 livros da Bíblia Livre).
+  - Estruturadas as 5 fases de execução técnica: Migração SQL + Tabela de Idempotência (5.1), Edge Function de Webhook Assinado (5.2), Edge Function de Checkout Seguro (5.3), Refatoração do Frontend e remoção de mutações client-side (5.4), e Homologação com cartões sandbox (5.5).
+- **Decisões Submetidas para Aprovação:**
+  - Adoção do Stripe como provedor global de subscrição; manutenção dos valores do PRD (US$ 1,49 PREMIUM / US$ 2,99 MASTER); período de graça de 3 dias em falha de cartão.
+- **Estado:** 📋 Plano Estruturado em Ficheiro Próprio; aguarda aprovação do utilizador para início da Fase 5.1.
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 00:33 (Africa/Maputo).
