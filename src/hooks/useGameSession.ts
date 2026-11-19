@@ -91,6 +91,11 @@ export function useGameSession(defaultMode: GameMode) {
     [phaseId, question, state.status, state.usedHintOnCurrentQuestion]
   );
 
+  /** O tempo conta como tentativa errada, para preservar as mesmas regras de coração e revisão. */
+  const submitTimeout = useCallback(() => {
+    submit([]);
+  }, [submit]);
+
   /** Restaura coração pedagógico através da leitura ("Ler para Recuperar") */
   const restoreHeartViaReading = useCallback(() => {
     setState((current) => ({
@@ -137,6 +142,7 @@ export function useGameSession(defaultMode: GameMode) {
     question,
     state,
     submit,
+    submitTimeout,
     advance,
     useHint,
     restoreHeartViaReading,

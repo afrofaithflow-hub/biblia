@@ -1,37 +1,63 @@
 import type { CanonicalPhase, CanonicalWorld, GameMode } from '../types/gameContracts';
+import {
+  CANONICAL_WORLDS as CANONICAL_GAME_WORLDS,
+  WORLD_1_PHASES as CANONICAL_WORLD_ONE_PHASES,
+} from '../data/canonicalGameData';
 
 const JOURNEY_STORAGE_KEY = 'biblia:game-journey-v1';
 
-export const CANONICAL_WORLDS: CanonicalWorld[] = [
-  { id: 1, slug: 'creation-eden', title: 'A Criação e o Éden', subtitle: 'Génesis 1–11', testament: 'AT', focus: 'Criação, queda, dilúvio e Babel', themeColor: 'emerald', icon: 'auto_awesome', totalPhases: 5, reviewTitle: 'Revisão dos Começos', achievementBadge: 'Pioneiro da Fé', isUnlocked: true },
-  { id: 2, slug: 'patriarchs', title: 'A Aliança dos Patriarcas', subtitle: 'Génesis 12–50', testament: 'AT', focus: 'Abraão, Isaac, Jacó e José', themeColor: 'amber', icon: 'family_restroom', totalPhases: 5, reviewTitle: 'Revisão da Aliança', achievementBadge: 'Filho da Promessa', isUnlocked: false },
-  { id: 3, slug: 'exodus-law', title: 'O Êxodo e a Lei', subtitle: 'Êxodo–Deuteronómio', testament: 'AT', focus: 'Libertação, deserto e aliança', themeColor: 'sky', icon: 'waves', totalPhases: 5, reviewTitle: 'Revisão da Libertação', achievementBadge: 'Liberto do Egito', isUnlocked: false },
-  { id: 4, slug: 'promised-land-kings', title: 'A Terra Prometida e os Reinos', subtitle: 'Josué–2 Reis', testament: 'AT', focus: 'Juízes, reis, coragem e sabedoria', themeColor: 'rose', icon: 'castle', totalPhases: 5, reviewTitle: 'Revisão dos Reinos', achievementBadge: 'Guardião da Aliança', isUnlocked: false },
-  { id: 5, slug: 'prophets', title: 'Vozes dos Profetas', subtitle: 'Profetas Maiores e Menores', testament: 'AT', focus: 'Esperança, justiça e restauração', themeColor: 'violet', icon: 'campaign', totalPhases: 5, reviewTitle: 'Revisão Profética', achievementBadge: 'Sentinela da Palavra', isUnlocked: false },
-  { id: 6, slug: 'gospel-grace', title: 'O Evangelho da Graça', subtitle: 'Mateus–João', testament: 'NT', focus: 'Jesus, parábolas, cruz e ressurreição', themeColor: 'teal', icon: 'menu_book', totalPhases: 5, reviewTitle: 'Revisão do Evangelho', achievementBadge: 'Discípulo de Cristo', isUnlocked: false },
-  { id: 7, slug: 'church-hope', title: 'A Igreja e a Esperança Final', subtitle: 'Atos–Apocalipse', testament: 'NT', focus: 'Missão, cartas e esperança cristã', themeColor: 'indigo', icon: 'groups', totalPhases: 5, reviewTitle: 'Revisão da Missão', achievementBadge: 'Servo Fiel', isUnlocked: false },
-];
-
-const WORLD_ONE_PHASES: CanonicalPhase[] = [
-  { id: 'world-1-phase-1', worldId: 1, phaseNumber: 1, title: 'A Criação', description: 'Descubra os começos em Génesis e a bondade da criação.', nodeType: 'lesson', scriptureReference: 'Génesis 1', estimatedMinutes: 5, mode: 'quiz', topics: ['Criação', 'Fé'], stars: 0, isCompleted: false, isUnlocked: true },
-  { id: 'world-1-phase-2', worldId: 1, phaseNumber: 2, title: 'A Queda', description: 'Reflita sobre escolha, confiança e restauração.', nodeType: 'lesson', scriptureReference: 'Génesis 3', estimatedMinutes: 5, mode: 'true-false', topics: ['Fé', 'Aliança'], stars: 0, isCompleted: false, isUnlocked: false },
-  { id: 'world-1-phase-3', worldId: 1, phaseNumber: 3, title: 'Memória da Criação', description: 'Guarde uma passagem-chave de Génesis no coração.', nodeType: 'memory', scriptureReference: 'Génesis 1:1', estimatedMinutes: 3, mode: 'fill-blanks', topics: ['Criação', 'Memória'], stars: 0, isCompleted: false, isUnlocked: false },
-  { id: 'world-1-phase-4', worldId: 1, phaseNumber: 4, title: 'O Grande Dilúvio', description: 'Explore a fidelidade de Deus na história de Noé.', nodeType: 'lesson', scriptureReference: 'Génesis 6–9', estimatedMinutes: 5, mode: 'quiz', topics: ['Fé', 'Aliança'], stars: 0, isCompleted: false, isUnlocked: false },
-  { id: 'world-1-phase-5', worldId: 1, phaseNumber: 5, title: 'Revisão dos Começos', description: 'Celebre o que aprendeu e consolide os temas do primeiro mundo.', nodeType: 'world_review', scriptureReference: 'Génesis 1–11', estimatedMinutes: 7, mode: 'quiz', topics: ['Criação', 'Fé', 'Aliança'], stars: 0, isCompleted: false, isUnlocked: false },
-];
+// Uma única fonte canónica para o mapa, a sessão, os desbloqueios e a base de dados.
+// O catálogo duplicado anterior tinha IDs diferentes e quebrava a progressão local.
+export const CANONICAL_WORLDS: CanonicalWorld[] = CANONICAL_GAME_WORLDS;
+const WORLD_ONE_PHASES: CanonicalPhase[] = CANONICAL_WORLD_ONE_PHASES;
 
 export interface JourneyState {
   phases: Record<string, CanonicalPhase>;
 }
 
 function createInitialState(): JourneyState {
-  return { phases: Object.fromEntries(WORLD_ONE_PHASES.map((phase) => [phase.id, { ...phase }])) };
+  // O catálogo é conteúdo; a conclusão pertence sempre ao jogador. Não usar
+  // estrelas/fases concluídas de demonstração como progresso inicial.
+  return {
+    phases: Object.fromEntries(WORLD_ONE_PHASES.map((phase, index) => [phase.id, {
+      ...phase,
+      isCompleted: false,
+      isUnlocked: index === 0,
+      stars: 0,
+      lastCompletedAt: undefined,
+      retentionReviewedAt: undefined,
+    }]))
+  };
 }
 
 export function getJourneyState(): JourneyState {
   try {
     const stored = localStorage.getItem(JOURNEY_STORAGE_KEY);
-    if (stored) return JSON.parse(stored) as JourneyState;
+    if (stored) {
+      const parsed = JSON.parse(stored) as JourneyState;
+      const expectedIds = new Set(WORLD_ONE_PHASES.map((phase) => phase.id));
+      if (Object.keys(parsed.phases || {}).some((id) => expectedIds.has(id))) return parsed;
+
+      // Migra a versão de protótipo, que tinha IDs incompatíveis, sem perder
+      // conclusões que o jogador já tivesse obtido por número de fase.
+      const migrated = createInitialState();
+      for (const previous of Object.values(parsed.phases || {})) {
+        const target = Object.values(migrated.phases).find(
+          (phase) => phase.worldId === previous.worldId && phase.phaseNumber === previous.phaseNumber
+        );
+        if (target) {
+          migrated.phases[target.id] = {
+            ...target,
+            isCompleted: Boolean(previous.isCompleted),
+            isUnlocked: Boolean(previous.isUnlocked || previous.isCompleted),
+            stars: Math.max(0, previous.stars || 0),
+            lastCompletedAt: previous.lastCompletedAt,
+          };
+        }
+      }
+      saveJourneyState(migrated);
+      return migrated;
+    }
   } catch {
     // A fresh state is safer than retaining malformed local progress.
   }
@@ -82,9 +108,13 @@ export function recordPhaseResult(phaseId: string | undefined, result: { complet
     lastCompletedAt: new Date().toISOString(),
   };
 
-  const nextId = `world-${phase.worldId}-phase-${phase.phaseNumber + 1}`;
-  if (state.phases[nextId]) {
-    state.phases[nextId] = { ...state.phases[nextId], isUnlocked: true };
+  const phasesInWorld = Object.values(state.phases)
+    .filter((item) => item.worldId === phase.worldId)
+    .sort((left, right) => left.phaseNumber - right.phaseNumber);
+  const currentIndex = phasesInWorld.findIndex((item) => item.id === phaseId);
+  const nextPhase = currentIndex >= 0 ? phasesInWorld[currentIndex + 1] : undefined;
+  if (nextPhase) {
+    state.phases[nextPhase.id] = { ...nextPhase, isUnlocked: true };
   }
   saveJourneyState(state);
 }

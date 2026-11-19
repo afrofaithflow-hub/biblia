@@ -59,24 +59,28 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
 
   // Carrega lista de amigos
   useEffect(() => {
-    getFriendsList().then(setFriends).catch(() => {});
+    getFriendsList().then(setFriends).catch(() => { });
   }, [tab]);
 
   const handleInvite = async (method: InviteMethod) => {
     setShowInvitePanel(false);
     if (method === 'link') {
       const invite = await generateInviteCode();
-      setGeneratedInvite(invite);
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(invite.shareUrl);
-        showToast(`Link copiado: ${invite.shareUrl}`, 'content_copy');
-      } else {
-        showToast(`Código gerado: ${invite.code}`, 'check_circle');
+      if (invite) {
+        setGeneratedInvite(invite);
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(invite.shareUrl);
+          showToast(`Link copiado: ${invite.shareUrl}`, 'content_copy');
+        } else {
+          showToast(`Código gerado: ${invite.code}`, 'check_circle');
+        }
       }
     } else if (method === 'qr') {
       const invite = await generateInviteCode();
-      setGeneratedInvite(invite);
-      setActiveModal('qr');
+      if (invite) {
+        setGeneratedInvite(invite);
+        setActiveModal('qr');
+      }
     } else if (method === 'code') {
       setInputCode('');
       setActiveModal('code');
@@ -99,7 +103,7 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
         showToast(res.message, res.success ? 'check_circle' : 'info');
       }
       setActiveModal(null);
-      getFriendsList().then(setFriends).catch(() => {});
+      getFriendsList().then(setFriends).catch(() => { });
     } else if (activeModal === 'handle') {
       const res = await acceptInviteCode(`BIBLIA-${inputCode.trim()}`);
       showToast(`Pedido enviado a @${inputCode.trim()}`, 'send');
@@ -111,7 +115,7 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
     if (window.confirm(`Deseja bloquear ${name}? Não receberá mais interações desta pessoa.`)) {
       const res = await blockUser(friendId);
       showToast(res.message, 'block');
-      getFriendsList().then(setFriends).catch(() => {});
+      getFriendsList().then(setFriends).catch(() => { });
     }
   };
 
@@ -439,7 +443,7 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
                 </div>
                 <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Seu Código QR</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Aproxime a câmara de outro telemóvel para conectar.</p>
-                
+
                 {/* QR Code SVG Visual */}
                 <div className="size-48 mx-auto p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-inner flex items-center justify-center">
                   <svg className="size-full" viewBox="0 0 100 100" fill="currentColor">

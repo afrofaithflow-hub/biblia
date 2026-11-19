@@ -2,22 +2,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAudio } from '../../context/AudioContext';
+import { useAuth } from '../../context/AuthContext';
 import { getLastRead } from '../../lib/bibleStorage';
 import { DEFAULT_BIBLE_TRANSLATION_ID, loadBibleChapter, getBibleTranslationLabel } from '../../data/bibleData';
+import { getUserProgressTracks } from '../../lib/gameSession';
 
 interface HomeScreenProps {
   onNavigate: (screenId: string) => void;
   showToast: (message: string, icon?: string) => void;
 }
 
-const XP_TOTAL = 500;
-const XP_CURRENT = 350;
-
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast }) => {
   const { currentPlan, openPricingModal } = useSubscription();
   const { themeMode, setThemeMode } = useTheme();
   const { loadTrack, play } = useAudio();
+  const { user } = useAuth();
   const lastRead = getLastRead();
+  const tracks = getUserProgressTracks();
+  const xpTotal = 250;
+  const xpCurrent = tracks.lifetimeXp % xpTotal;
+  const displayName = String(user?.user_metadata?.display_name || user?.email?.split('@')[0] || '');
   const [passageVerseText, setPassageVerseText] = useState('');
   useEffect(() => {
     let active = true;
@@ -36,10 +40,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
   // Animate XP bar on mount
   useEffect(() => {
     const timer = setTimeout(() => {
-      setXpWidth((XP_CURRENT / XP_TOTAL) * 100);
+      setXpWidth((xpCurrent / xpTotal) * 100);
     }, 300);
     return () => clearTimeout(timer);
-  }, []);
+  }, [xpCurrent]);
 
   // Close theme menu when clicking outside
   useEffect(() => {
@@ -76,7 +80,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
       <header className="flex items-center justify-between px-5 pt-4 pb-3 sticky top-0 z-20 bg-bg-canvas/95 dark:bg-dark-canvas/95 backdrop-blur-md border-b border-slate-200/60 dark:border-dark-border transition-colors">
         <div className="flex flex-col gap-0.5 text-left animate-fade-in">
           <h1 className="text-slate-900 dark:text-white text-2xl font-extrabold leading-tight tracking-tight">
-            Olá, João 👋
+            {displayName ? `Olá, ${displayName} 👋` : 'Bem-vindo(a) 👋'}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
             Vamos continuar sua caminhada?
@@ -144,12 +148,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
             className="relative flex size-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-gold-radiant/60 shadow-sm transition-transform hover:scale-105 active:scale-95"
             title="Ver Perfil"
           >
-            <img
-              alt="Foto de João"
-              className="h-full w-full object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAK9KKr7Y21m-qaMZTLU1Jes5mmeftJGVnlQAExsiE6fEeWw1hnhju4LfZbAHhwG9tCCulmsTgAUuGAB_9zvWf0tIu5aWDvlYtCCi3onDkuKGbdDZ6U_QPxOdaZM8whk8_2lR99ha5i-KasXafoufTX6shzhPzle63_pJUBx9djSurblSHUFJKHgMF_vZYSM0FDST6zjgVgbWQ_ny9eiwWtDec2_f1yd76QJXB1ZkDmxiHvkAutfXzktV5eSZq9na_li7Cq9NQS4pc"
-            />
-            <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-dark-canvas" />
+            <span className="material-symbols-outlined text-xl text-sacred-brand dark:text-sacred-neon">person</span>
+            {user && <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-dark-canvas" />}
           </button>
         </div>
       </header>
@@ -170,7 +170,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
                     verified
                   </span>
                   <span className="text-base font-extrabold text-sacred-brand dark:text-sacred-neon">
-                    Missionário II
+                    Nível {tracks.walkLevel}
                   </span>
                 </div>
               </div>
@@ -184,8 +184,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
                 <span className="material-symbols-outlined text-base animate-flame-pulse" style={{ fontVariationSettings: "'FILL' 1" }}>
                   local_fire_department
                 </span>
-                <span className="text-xs font-black">5</span>
-                <span className="text-[10px] opacity-80">dias</span>
+                <span className="text-xs font-black">{tracks.streakDays}</span>
+                <span className="text-[10px] opacity-80">{tracks.streakDays === 1 ? 'dia' : 'dias'}</span>
               </button>
             </div>
 
@@ -194,7 +194,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-slate-500 dark:text-slate-400">Progresso</span>
                 <span className="font-bold text-gold-talent dark:text-gold-radiant tabular-nums">
-                  {XP_CURRENT}<span className="text-slate-400 font-normal">/{XP_TOTAL} Talentos</span>
+                  {xpCurrent}<span className="text-slate-400 font-normal">/{xpTotal} XP</span>
                 </span>
               </div>
               <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -204,7 +204,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
                 />
               </div>
               <p className="text-[10px] text-slate-400 text-right">
-                150 Talentos para avançar ao Nível III
+                {xpTotal - xpCurrent} XP para o próximo nível
               </p>
             </div>
           </div>
@@ -323,7 +323,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
             </div>
             <div>
               <h4 className="font-bold text-xs text-slate-900 dark:text-white">Planos de Leitura</h4>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">30 dias · Dia 12</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Escolha uma jornada ao seu ritmo</p>
             </div>
           </button>
 
@@ -337,7 +337,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
             </div>
             <div>
               <h4 className="font-bold text-xs text-slate-900 dark:text-white">Áudio Bíblia</h4>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Salmos 23 narrado</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Continue em {lastRead.book} {lastRead.chapter}</p>
             </div>
           </button>
         </div>

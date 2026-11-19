@@ -1,222 +1,165 @@
 /**
- * ==============================================================================
- * BiblIA — Serviço Social Canônico e Ligas (G4)
- * Convites Seguros (QR/Link/Código), Amigos Bilaterais, Grupos Locais e Moderação
- * ==============================================================================
+ * Dados sociais do BiblIA.
+ * Nunca cria amigos, ranking, grupos ou convites fictícios: ausência de dados é
+ * um estado válido e deve chegar à interface como tal.
  */
 
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import type { SocialFriend, ChurchGroup } from '../types/gameContracts';
+import type { SocialFriend } from '../types/gameContracts';
 
-const LOCAL_FRIENDS_KEY = 'biblia:local-friends';
-const LOCAL_GROUPS_KEY = 'biblia:local-church-groups';
+export interface LeagueEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  weeklyTalents: number;
+}
 
-/** Dados mock padrão para modo offline/sandbox seguro */
-const DEFAULT_FRIENDS: SocialFriend[] = [
-  { id: 'f1', username: 'mateus_silva', displayName: 'Pr. Mateus Silva', avatarUrl: '', weeklyTalents: 340, walkLevel: 8, status: 'accepted', isMutual: true },
-  { id: 'f2', username: 'ana_santos', displayName: 'Ana Clara Santos', avatarUrl: '', weeklyTalents: 290, walkLevel: 5, status: 'accepted', isMutual: true },
-  { id: 'f3', username: 'lucas_oliver', displayName: 'Lucas Oliveira', avatarUrl: '', weeklyTalents: 180, walkLevel: 4, status: 'accepted', isMutual: true },
-];
+function getMaputoWeekKey(date = new Date()): string {
+  const maputo = new Date(date.toLocaleString('en-US', { timeZone: 'Africa/Maputo' }));
+  const day = maputo.getDay() || 7;
+  maputo.setDate(maputo.getDate() + 4 - day);
+  const yearStart = new Date(maputo.getFullYear(), 0, 1);
+  const week = Math.ceil((((maputo.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${maputo.getFullYear()}-W${String(week).padStart(2, '0')}`;
+}
 
-const DEFAULT_GROUP: ChurchGroup = {
-  id: 'g1',
-  name: 'Célula Graça e Paz',
-  code: 'GRACA-2026',
-  avatar: 'church',
-  membersCount: 14,
-  weeklyGoalProgress: 72,
-  goalTargetDescription: '1.450 / 2.000 XP coletivos',
-};
+async function getAuthenticatedUserId(): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user?.id ?? null;
+}
 
-/** Lê a lista de amigos (Supabase ou fallback local) */
+/** Lê apenas amizades reais já aceites para a conta autenticada. */
 export async function getFriendsList(): Promise<SocialFriend[]> {
-  if (!isSupabaseConfigured) {
-    try {
-      const raw = localStorage.getItem(LOCAL_FRIENDS_KEY);
-      return raw ? JSON.parse(raw) : DEFAULT_FRIENDS;
-    } catch {
-      return DEFAULT_FRIENDS;
-    }
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return [];
+
+  const { data, error } = await supabase
+    .from('friendships')
+    .select(`
+      friend_id,
+      status,
+      friend:profiles!friendships_friend_id_fkey(id, display_name, avatar_url, xp)
+    `)
+    .eq('user_id', userId)
+    .eq('status', 'accepted');
+
+  if (error || !data) {
+    console.warn('[gameSocialService] Falha ao carregar amizades:', error?.message);
+    return [];
   }
 
-  try {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
-    if (!userId) {
-      const raw = localStorage.getItem(LOCAL_FRIENDS_KEY);
-      return raw ? JSON.parse(raw) : DEFAULT_FRIENDS;
-    }
-
-    const { data, error } = await supabase
-      .from('friendships')
-      .select(`
-        friend_id,
-        status,
-        friend:profiles!friendships_friend_id_fkey(id, display_name, avatar_url, xp)
-      `)
-      .eq('user_id', userId)
-      .eq('status', 'accepted');
-
-    if (error || !data) {
-      return DEFAULT_FRIENDS;
-    }
-
-    return data.map((item: any, idx: number) => ({
-      id: item.friend?.id || `friend-${idx}`,
-      username: (item.friend?.display_name || 'irmao').toLowerCase().replace(/\s+/g, '_'),
-      displayName: item.friend?.display_name || 'Amigo na Fé',
+  return data.map((item: any) => {
+    const xp = Number(item.friend?.xp || 0);
+    return {
+      id: item.friend?.id || item.friend_id,
+      username: String(item.friend?.display_name || 'amigo').toLowerCase().replace(/\s+/g, '_'),
+      displayName: item.friend?.display_name || 'Utilizador BiblIA',
       avatarUrl: item.friend?.avatar_url || '',
-      weeklyTalents: Math.round((item.friend?.xp || 100) / 5),
-      walkLevel: Math.floor((item.friend?.xp || 100) / 250) + 1,
+      weeklyTalents: 0,
+      walkLevel: Math.max(1, Math.floor(xp / 250) + 1),
       status: 'accepted' as const,
       isMutual: true,
-    }));
-  } catch (err) {
-    console.warn('[gameSocialService] Falha ao carregar amigos:', err);
-    return DEFAULT_FRIENDS;
-  }
+    };
+  });
 }
 
-/** Gera um código de convite seguro (ex: BIBLIA-X9K2) */
-export async function generateInviteCode(): Promise<{ code: string; shareUrl: string }> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase.rpc('generate_friend_invite');
-      if (!error && data?.invite_code) {
-        return {
-          code: data.invite_code,
-          shareUrl: data.share_url || `https://biblia.app/convite/${data.invite_code}`,
-        };
-      }
-    } catch {
-      // Fallback local se falhar
-    }
+/** Lê o snapshot calculado pelo servidor para a semana corrente. */
+export async function getLeagueRanking(): Promise<LeagueEntry[]> {
+  if (!isSupabaseConfigured) return [];
+
+  const { data, error } = await supabase
+    .from('league_snapshots')
+    .select('user_id, display_name, avatar_url, weekly_talents, rank_position')
+    .eq('week_key', getMaputoWeekKey())
+    .order('rank_position', { ascending: true })
+    .limit(50);
+
+  if (error || !data) {
+    console.warn('[gameSocialService] Falha ao carregar ranking:', error?.message);
+    return [];
   }
 
-  // Fallback local
-  const code = 'BIBLIA-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  return data.map((item) => ({
+    rank: item.rank_position,
+    userId: item.user_id,
+    displayName: item.display_name,
+    avatarUrl: item.avatar_url,
+    weeklyTalents: item.weekly_talents,
+  }));
+}
+
+/** Cria convite real via RPC. Sem conta, não há convite fictício. */
+export async function generateInviteCode(): Promise<{ code: string; shareUrl: string } | null> {
+  if (!await getAuthenticatedUserId()) return null;
+
+  const { data, error } = await supabase.rpc('generate_friend_invite');
+  if (error || !data?.invite_code) {
+    console.warn('[gameSocialService] Falha ao gerar convite:', error?.message);
+    return null;
+  }
+
   return {
-    code,
-    shareUrl: `https://biblia.app/convite/${code}`,
+    code: data.invite_code,
+    shareUrl: data.share_url || `${window.location.origin}/convite/${data.invite_code}`,
   };
 }
 
-/** Aceita um código de convite de amigo */
 export async function acceptInviteCode(code: string): Promise<{ success: boolean; message: string }> {
   const cleanCode = code.trim().toUpperCase();
-  if (!cleanCode) {
-    return { success: false, message: 'Digite um código válido.' };
+  if (!cleanCode) return { success: false, message: 'Digite um código válido.' };
+  if (!await getAuthenticatedUserId()) {
+    return { success: false, message: 'Entre numa conta para aceitar um convite.' };
   }
 
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase.rpc('accept_friend_invite', { p_code: cleanCode });
-      if (error) {
-        return { success: false, message: error.message };
-      }
-      if (data?.status === 'error') {
-        return { success: false, message: data.message || 'Código inválido.' };
-      }
-      return { success: true, message: data?.message || 'Amigo adicionado com sucesso!' };
-    } catch (err: any) {
-      return { success: false, message: err.message || 'Erro ao conectar.' };
-    }
-  }
-
-  // Simulação local offline
-  const current = await getFriendsList();
-  const cleanHandle = cleanCode.replace('BIBLIA-', '').toLowerCase();
-  const newFriend: SocialFriend = {
-    id: `local-${Date.now()}`,
-    username: cleanHandle,
-    displayName: `Irmão (${cleanHandle})`,
-    avatarUrl: '',
-    weeklyTalents: 120,
-    walkLevel: 3,
-    status: 'accepted',
-    isMutual: true,
-  };
-  localStorage.setItem(LOCAL_FRIENDS_KEY, JSON.stringify([newFriend, ...current]));
-  return { success: true, message: 'Convite aceito localmente! Amigo adicionado à sua lista.' };
+  const { data, error } = await supabase.rpc('accept_friend_invite', { p_code: cleanCode });
+  if (error) return { success: false, message: error.message };
+  if (data?.status === 'error') return { success: false, message: data.message || 'Código inválido.' };
+  return { success: true, message: data?.message || 'Amizade adicionada com sucesso.' };
 }
 
-/** Entra em grupo local de igreja/célula por código */
 export async function joinChurchGroupByCode(code: string): Promise<{ success: boolean; message: string }> {
   const cleanCode = code.trim().toUpperCase();
-  if (!cleanCode) {
-    return { success: false, message: 'Digite o código da sua igreja ou célula.' };
+  if (!cleanCode) return { success: false, message: 'Digite o código da sua igreja ou célula.' };
+  if (!await getAuthenticatedUserId()) {
+    return { success: false, message: 'Entre numa conta para participar de um grupo.' };
   }
 
-  if (isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase.rpc('join_church_group_by_code', { p_code: cleanCode });
-      if (error) {
-        return { success: false, message: error.message };
-      }
-      if (data?.status === 'error') {
-        return { success: false, message: data.message };
-      }
-      return { success: true, message: data?.message || 'Entrou no grupo com sucesso!' };
-    } catch (err: any) {
-      return { success: false, message: err.message };
-    }
-  }
-
-  // Simulação local offline
-  return { success: true, message: `Conectado à comunidade (${cleanCode}) com sucesso!` };
+  const { data, error } = await supabase.rpc('join_church_group_by_code', { p_code: cleanCode });
+  if (error) return { success: false, message: error.message };
+  if (data?.status === 'error') return { success: false, message: data.message || 'Código inválido.' };
+  return { success: true, message: data?.message || 'Entrou no grupo com sucesso.' };
 }
 
-/** Bloqueia um utilizador (proteção e moderação) */
 export async function blockUser(targetUserId: string): Promise<{ success: boolean; message: string }> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-      if (userId) {
-        await supabase.from('user_blocks').insert({
-          blocker_id: userId,
-          blocked_id: targetUserId,
-        });
-      }
-    } catch {
-      // Silencioso
-    }
-  }
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { success: false, message: 'Entre numa conta para bloquear alguém.' };
 
-  // Remove da lista local
-  try {
-    const current = await getFriendsList();
-    const filtered = current.filter((f) => f.id !== targetUserId);
-    localStorage.setItem(LOCAL_FRIENDS_KEY, JSON.stringify(filtered));
-  } catch {
-    // Silencioso
-  }
-
-  return { success: true, message: 'Utilizador bloqueado. Não receberá mais interações.' };
+  const { error } = await supabase.from('user_blocks').insert({
+    blocker_id: userId,
+    blocked_id: targetUserId,
+  });
+  return error
+    ? { success: false, message: error.message }
+    : { success: true, message: 'Utilizador bloqueado. Não receberá mais interações.' };
 }
 
-/** Denuncia um utilizador à moderação */
 export async function reportUser(
   targetUserId: string,
   reason: 'inappropriate_name' | 'harassment' | 'spam' | 'hate_speech' | 'other',
   details?: string
 ): Promise<{ success: boolean; message: string }> {
-  if (isSupabaseConfigured) {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-      if (userId) {
-        await supabase.from('user_reports').insert({
-          reporter_id: userId,
-          reported_id: targetUserId,
-          reason,
-          details: details || null,
-        });
-      }
-    } catch {
-      // Silencioso
-    }
-  }
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return { success: false, message: 'Entre numa conta para enviar uma denúncia.' };
 
-  return { success: true, message: 'Denúncia recebida. A nossa equipa irá analisar com cuidado.' };
+  const { error } = await supabase.from('user_reports').insert({
+    reporter_id: userId,
+    reported_id: targetUserId,
+    reason,
+    details: details || null,
+  });
+  return error
+    ? { success: false, message: error.message }
+    : { success: true, message: 'Denúncia recebida. A nossa equipa irá analisar com cuidado.' };
 }

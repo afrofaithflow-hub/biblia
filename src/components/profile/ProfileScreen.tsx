@@ -2,6 +2,7 @@ import React from 'react';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { useTheme, ThemeMode } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { getUserProgressTracks } from '../../lib/gameSession';
 
 interface ProfileScreenProps {
   onNavigate: (screen: string) => void;
@@ -10,6 +11,7 @@ interface ProfileScreenProps {
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showToast }) => {
   const {
+    profile,
     currentPlan,
     planTier,
     isSubscriptionActive,
@@ -17,12 +19,28 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
     cancelSubscription,
   } = useSubscription();
 
+  const [loadingPortal, setLoadingPortal] = React.useState(false);
   const { themeMode, setThemeMode } = useTheme();
   const { user, openAuthModal, signOut } = useAuth();
+  const tracks = getUserProgressTracks();
+
+  const handleManageSubscription = async () => {
+    setLoadingPortal(true);
+    try {
+      const res = await cancelSubscription();
+      if (res.error) {
+        showToast(res.error, 'error');
+      } else {
+        showToast('A abrir portal de pagamentos...', 'open_in_new');
+      }
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
 
   const displayName =
-    user?.user_metadata?.display_name || (user?.email ? user.email.split('@')[0] : 'João');
-  const userEmail = user?.email || 'joao.pereira@biblia.app';
+    user?.user_metadata?.display_name || (user?.email ? user.email.split('@')[0] : 'Visitante');
+  const userEmail = user?.email || 'Progresso guardado neste dispositivo';
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas text-slate-800 dark:text-slate-100 font-display transition-colors duration-200 pb-28">
@@ -72,12 +90,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
             title={user ? 'Alterar Foto' : 'Conectar Conta'}
           >
             <div className="p-1 rounded-full border-2 border-gold-radiant/60 dark:border-gold-radiant/40 shadow-sm">
-              <div
-                className="size-24 rounded-full bg-cover bg-center shadow-soft flex items-center justify-center bg-slate-200 dark:bg-slate-800"
-                style={{
-                  backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAK9KKr7Y21m-qaMZTLU1Jes5mmeftJGVnlQAExsiE6fEeWw1hnhju4LfZbAHhwG9tCCulmsTgAUuGAB_9zvWf0tIu5aWDvlYtCCi3onDkuKGbdDZ6U_QPxOdaZM8whk8_2lR99ha5i-KasXafoufTX6shzhPzle63_pJUBx9djSurblSHUFJKHgMF_vZYSM0FDST6zjgVgbWQ_ny9eiwWtDec2_f1yd76QJXB1ZkDmxiHvkAutfXzktV5eSZq9na_li7Cq9NQS4pc')`,
-                }}
-              />
+              <div className="size-24 rounded-full shadow-soft flex items-center justify-center bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+                <span className="material-symbols-outlined text-4xl">person</span>
+              </div>
             </div>
             <div className="absolute bottom-1 right-1 bg-sacred-brand text-white rounded-full p-1.5 border-2 border-bg-canvas dark:border-dark-canvas flex items-center justify-center shadow-sm">
               <span className="material-symbols-outlined text-[13px]">edit</span>
@@ -126,6 +141,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
                       ? 'Plano Premium Mensal'
                       : 'Plano Gratuito (Free)'}
                   </p>
+
+                  {profile.active_subscription && (
+                    <div className="mt-2 text-[11px] space-y-0.5">
+                      {profile.active_subscription.cancel_at_period_end ? (
+                        <p className="text-amber-500 font-semibold flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">event_busy</span>
+                          <span>Cancelamento agendado até {new Date(profile.active_subscription.current_period_end).toLocaleDateString()}</span>
+                        </p>
+                      ) : (
+                        <p className="text-emerald-500 font-medium flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">check_circle</span>
+                          <span>Válido até {new Date(profile.active_subscription.current_period_end).toLocaleDateString()}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="bg-sacred-light dark:bg-sacred-deep/50 p-2.5 rounded-xl text-sacred-brand dark:text-sacred-neon">
                   <span className="material-symbols-outlined text-2xl">spa</span>
@@ -139,12 +170,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
                     <span className="material-symbols-outlined text-gold-talent text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
                       bolt
                     </span>
-                    <span>7 Dias de Graça</span>
+                    <span>{tracks.streakDays} {tracks.streakDays === 1 ? 'Dia' : 'Dias'} de Graça</span>
                   </span>
                   <span className="text-[10px] font-semibold text-slate-400">Ofensiva Semanal</span>
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                  <div className="bg-gradient-to-r from-gold-talent to-gold-radiant h-full rounded-full" style={{ width: '100%' }}></div>
+                  <div className="bg-gradient-to-r from-gold-talent to-gold-radiant h-full rounded-full" style={{ width: `${Math.min(100, (tracks.streakDays / 7) * 100)}%` }}></div>
                 </div>
               </div>
             </div>
@@ -164,13 +195,33 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
 
         {/* Support & Upgrade CTA Button */}
         <section className="w-full mb-6">
-          <button
-            onClick={openPricingModal}
-            className="w-full btn-duo-primary dark:btn-duo-primary-dark text-sm py-4 flex items-center justify-center gap-2.5"
-          >
-            <span className="material-symbols-outlined text-xl">volunteer_activism</span>
-            <span>Apoiar & Fazer Crescer o Movimento</span>
-          </button>
+          {isSubscriptionActive ? (
+            <button
+              onClick={handleManageSubscription}
+              disabled={loadingPortal}
+              className="w-full py-3.5 px-4 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-2 border border-slate-300 dark:border-slate-700"
+            >
+              {loadingPortal ? (
+                <>
+                  <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                  <span>A aceder ao Stripe...</span>
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-base">manage_accounts</span>
+                  <span>Gerir Subscrição ou Cancelar (Stripe)</span>
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={openPricingModal}
+              className="w-full btn-duo-primary dark:btn-duo-primary-dark text-sm py-4 flex items-center justify-center gap-2.5"
+            >
+              <span className="material-symbols-outlined text-xl">volunteer_activism</span>
+              <span>Apoiar & Fazer Crescer o Movimento</span>
+            </button>
+          )}
           <p className="text-center text-[11px] text-slate-500 dark:text-slate-400 mt-2">
             Contribua para manter a Bíblia acessível e apoiar traduções em línguas africanas.
           </p>

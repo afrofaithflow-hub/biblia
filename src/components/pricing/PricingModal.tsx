@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSubscription } from '../../context/SubscriptionContext';
+import { useAuth } from '../../context/AuthContext';
 import { PLANS } from '../../lib/subscriptionService';
 
 interface PricingModalProps {
@@ -13,36 +14,40 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, sho
     planTier,
     currentPlan,
     isSubscriptionActive,
+    paymentsAvailable,
     activatePlan,
-    cancelSubscription,
   } = useSubscription();
+
+  const { user, openAuthModal } = useAuth();
+  const [loadingTier, setLoadingTier] = useState<number | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSelectPlan = (tier: 0 | 1 | 2) => {
-    if (tier === 0) {
-      if (planTier > 0) {
-        cancelSubscription();
-        if (showToast) showToast('Subscrição cancelada. Acesso FREE mantido.', 'info');
-      }
-      onClose();
-      return;
-    }
-
-    if (tier === planTier && isSubscriptionActive) {
+  const handleSelectPlan = async (tier: 0 | 1 | 2) => {
+    if (tier === 0 || (tier === planTier && isSubscriptionActive)) {
       if (showToast) showToast(`Você já está no plano ${currentPlan}!`, 'check_circle');
       onClose();
       return;
     }
 
-    activatePlan(tier);
-    if (showToast) {
-      showToast(
-        `Plano ${tier === 1 ? 'PREMIUM (US$ 1,49)' : 'MASTER (US$ 2,99)'} ativado com sucesso!`,
-        'verified'
-      );
+    if (!user) {
+      if (showToast) showToast('Autentique-se primeiro para assinar um plano.', 'login');
+      onClose();
+      openAuthModal();
+      return;
     }
-    onClose();
+
+    setLoadingTier(tier);
+    try {
+      const res = await activatePlan(tier as 1 | 2);
+      if (res.error) {
+        if (showToast) showToast(res.error, 'error');
+      } else if (res.checkout_url) {
+        if (showToast) showToast('A redirecionar para checkout seguro...', 'payment');
+      }
+    } finally {
+      setLoadingTier(null);
+    }
   };
 
   return (
@@ -158,19 +163,31 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, sho
                 {/* Plan Action Button */}
                 <button
                   onClick={() => handleSelectPlan(plan.tier as 0 | 1 | 2)}
-                  className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-[0.98] ${
+                  disabled={loadingTier !== null || (plan.tier > 0 && !paymentsAvailable)}
+                  className={`w-full py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-1.5 ${
                     isCurrent && isSubscriptionActive
                       ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 cursor-default'
+                      : plan.tier > 0 && !paymentsAvailable
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed shadow-none'
                       : plan.tier === 0
                       ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200'
                       : plan.tier === 1
                       ? 'bg-primary hover:bg-primary-dark text-white'
-                      : 'bg-secondary hover:bg-yellow-500 text-white'
+                      : 'bg-secondary hover:bg-yellow-500 text-slate-950 font-black'
                   }`}
                 >
-                  {isCurrent && (isSubscriptionActive || plan.tier === 0)
-                    ? 'Plano Atual'
-                    : `Assinar ${plan.name} (${plan.priceFormatted})`}
+                  {loadingTier === plan.tier ? (
+                    <>
+                      <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                      <span>A preparar Stripe...</span>
+                    </>
+                  ) : isCurrent && (isSubscriptionActive || plan.tier === 0) ? (
+                    'Plano Atual'
+                  ) : plan.tier > 0 && !paymentsAvailable ? (
+                    'Disponível em breve'
+                  ) : (
+                    `Assinar ${plan.name} (${plan.priceFormatted})`
+                  )}
                 </button>
               </div>
             );
@@ -178,7 +195,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, sho
         </div>
 
         <p className="text-[10px] text-gray-400 text-center mt-4">
-          Valores de referência em USD. Cobrança mensal automática com cancelamento a qualquer momento.
+          Valores de referência em USD. A cobrança será ativada somente com gateway e webhooks verificados.
         </p>
       </div>
     </div>

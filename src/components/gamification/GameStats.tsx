@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { getDailyProgress, getReviewQueue, getUserProgressTracks } from '../../lib/gameSession';
+import { getDailyProgress, getReviewQueue, getUserProgressTracks, requestGameMode } from '../../lib/gameSession';
 
 interface GameStatsProps {
   onNavigate: (screen: string) => void;
@@ -218,7 +218,8 @@ export const GameStats: React.FC<GameStatsProps> = ({ onNavigate, showToast }) =
                   <button
                     onClick={() => {
                       showToast(`Iniciando revisão de ${Math.min(3, dueReviews.length)} passagens`, 'history_edu');
-                      onNavigate('screen-jogo-tf');
+                      requestGameMode('true-false');
+                      onNavigate('screen-jogo-licao');
                     }}
                     className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold"
                   >

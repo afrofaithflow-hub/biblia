@@ -10,9 +10,6 @@ import { MiniAudioPlayer } from './components/audio/MiniAudioPlayer';
 import { GameDashboard } from './components/gamification/GameDashboard';
 import { WorldMap } from './components/gamification/WorldMap';
 import { LevelSelectionScreen } from './components/gamification/LevelSelectionScreen';
-import { QuizScreen } from './components/gamification/QuizScreen';
-import { GameTrueFalse } from './components/gamification/GameTrueFalse';
-import { GameFillBlanks } from './components/gamification/GameFillBlanks';
 import { GameDailyChallenge } from './components/gamification/GameDailyChallenge';
 import { GameLeaderboard } from './components/gamification/GameLeaderboard';
 import { GameStats } from './components/gamification/GameStats';
@@ -26,8 +23,8 @@ import { ClanHub } from './components/clans/ClanHub';
 import { ProfileScreen } from './components/profile/ProfileScreen';
 import { PricingModal } from './components/pricing/PricingModal';
 import { AuthModal } from './components/auth/AuthModal';
-import { WebhookSimulatorDrawer } from './components/sandbox/WebhookSimulatorDrawer';
 import { Toast } from './components/shared/Toast';
+import { WebhookSimulatorDrawer } from './components/sandbox/WebhookSimulatorDrawer';
 
 /** Tab-level screens — sub-screens belong to their parent tab */
 const GAME_SUB_SCREENS = new Set([
@@ -214,13 +211,13 @@ const AppContent: React.FC = () => {
               <GameLessonHost onNavigate={navigate} showToast={showToast} />
             )}
             {currentScreen === 'screen-jogo-quiz' && (
-              <QuizScreen onNavigate={navigate} showToast={showToast} />
+              <GameLessonHost onNavigate={navigate} showToast={showToast} defaultMode="quiz" />
             )}
             {currentScreen === 'screen-jogo-tf' && (
-              <GameTrueFalse onNavigate={navigate} showToast={showToast} />
+              <GameLessonHost onNavigate={navigate} showToast={showToast} defaultMode="true-false" />
             )}
             {currentScreen === 'screen-jogo-fill' && (
-              <GameFillBlanks onNavigate={navigate} showToast={showToast} />
+              <GameLessonHost onNavigate={navigate} showToast={showToast} defaultMode="fill-blanks" />
             )}
             {currentScreen === 'screen-desafio-diario' && (
               <GameDailyChallenge onNavigate={navigate} showToast={showToast} />
@@ -397,8 +394,9 @@ const AppContent: React.FC = () => {
           showToast={showToast}
         />
 
-        {/* Dev Sandbox */}
-        <WebhookSimulatorDrawer />
+        {/* Sandbox Webhook Simulator (Apenas Ambiente DEV) */}
+        {import.meta.env.DEV && <WebhookSimulatorDrawer />}
+
       </div>
   );
 };

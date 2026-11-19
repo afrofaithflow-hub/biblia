@@ -62,6 +62,30 @@ export interface GameSessionState {
 
 export const MAX_GAME_LIVES = REWARD_RULES.MAX_SESSION_HEARTS;
 
+const EMPTY_PROGRESS_TRACKS: UserProgressTracks = {
+  lifetimeXp: 0,
+  walkLevel: 1,
+  masteryStars: 0,
+  topicMastery: {},
+  weeklyTalents: 0,
+  weeklyLeague: 'seed',
+  leagueRank: 0,
+  streakDays: 0,
+  lastDailyDate: null,
+  hearts: MAX_GAME_LIVES,
+};
+
+function isLegacyDemoProgress(tracks: UserProgressTracks): boolean {
+  return (
+    tracks.lifetimeXp === 1240 &&
+    tracks.walkLevel === 6 &&
+    tracks.masteryStars === 18 &&
+    tracks.weeklyTalents === 240 &&
+    tracks.leagueRank === 4 &&
+    tracks.streakDays === 7
+  );
+}
+
 /** Retorna a chave de data no fuso de Maputo (AAAA-MM-DD) */
 export function getMaputoDateKey(date = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -104,30 +128,22 @@ export function getUserProgressTracks(): UserProgressTracks {
   try {
     const raw = localStorage.getItem(PROGRESS_TRACKS_KEY);
     if (raw) {
-      return JSON.parse(raw) as UserProgressTracks;
+      const tracks = JSON.parse(raw) as UserProgressTracks;
+      if (!isLegacyDemoProgress(tracks)) {
+        return {
+          ...EMPTY_PROGRESS_TRACKS,
+          ...tracks,
+          topicMastery: tracks.topicMastery || {},
+        };
+      }
+      // Os números do protótipo nunca foram uma conquista do utilizador.
+      localStorage.removeItem(PROGRESS_TRACKS_KEY);
     }
   } catch {
     // fallback
   }
 
-  return {
-    lifetimeXp: 1240,
-    walkLevel: 6,
-    masteryStars: 18,
-    topicMastery: {
-      'Criação': 85,
-      'Aliança': 60,
-      'Fé': 90,
-      'Sabedoria': 70,
-      'Evangelhos': 75,
-    },
-    weeklyTalents: 240,
-    weeklyLeague: 'disciple',
-    leagueRank: 4,
-    streakDays: 7,
-    lastDailyDate: null,
-    hearts: MAX_GAME_LIVES,
-  };
+  return { ...EMPTY_PROGRESS_TRACKS, topicMastery: {} };
 }
 
 export function saveUserProgressTracks(tracks: UserProgressTracks): void {

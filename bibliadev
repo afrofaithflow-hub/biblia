@@ -810,3 +810,23 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Implementada a função PL/pgSQL transacional `apply_subscription_event` com execução restrita à `service_role`. A função gere atomicamente a máquina de estados (ativação, cancelamento agendado com manutenção do acesso até `current_period_end` e expiração pacífica para o plano FREE).
 - **Validação de Build:** `npm.cmd run build` executado e aprovado com **Exit Code 0** (200 módulos transformados, zero erros TypeScript).
 - **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 00:37 (Africa/Maputo).
+
+
+### 20/11/2026 — 01:15 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Execução Concluída das Fases 5.2, 5.3 e 5.4: Edge Functions de Pagamento, Portal e Integração Frontend
+- **Edge Function: payment-webhook (`supabase/functions/payment-webhook/index.ts`):**
+  - Implementada verificação criptográfica HMAC SHA-256 via Web Crypto API nativa do Deno, validando cabeçalhos `Stripe-Signature` e tolerando janela de desfasamento temporal de até 5 minutos.
+  - Idempotência rigorosa garantida através de pré-registo e verificação na tabela `payment_webhook_events`. Eventos repetidos retornam status HTTP 200 com flag `duplicate: true`.
+  - Processamento seguro dos 5 eventos essenciais do ciclo de vida da assinatura (`checkout.session.completed`, `invoice.payment_succeeded`, `invoice.payment_failed`, `customer.subscription.updated` com `cancel_at_period_end=true`, e `customer.subscription.deleted`), delegando a mutação segura de dados para a RPC `apply_subscription_event` com credenciais `service_role`.
+- **Edge Function: payment-checkout (`supabase/functions/payment-checkout/index.ts`):**
+  - Endpoint autenticado via JWT Bearer Token do utilizador.
+  - Criação de sessões Stripe Checkout em modo assinatura (`mode=subscription`), associando metadados seguros (`user_id`, `tier`) e mapeando preços de acordo com variáveis de ambiente.
+  - Resposta com URL de redirecionamento seguro para o checkout do Stripe.
+- **Edge Function: payment-portal (`supabase/functions/payment-portal/index.ts`):**
+  - Endpoint autenticado para abertura do Stripe Customer Portal oficial, permitindo ao assinante alterar cartões, consultar faturas e cancelar subscrições com segurança.
+- **Refatoração do Frontend (Fase 5.4):**
+  - **`SubscriptionContext.tsx`:** Removida qualquer mutação client-side de `profiles.plan_tier`. Integrados métodos assíncronos `activatePlan(tier)` e `cancelSubscription()` que invocam as Edge Functions do Supabase e redirecionam o utilizador. Integrada a sincronização reativa a partir da tabela `subscriptions`.
+  - **`PricingModal.tsx`:** Conectado o botão de assinatura ao fluxo real com feedback de carregamento dinâmico ("A preparar Stripe...") e tratamento de autenticação prévia.
+  - **`ProfileScreen.tsx`:** Exibição da data real de validade da assinatura (`current_period_end`), indicador de cancelamento agendado e botão direto "Gerir Subscrição ou Cancelar (Stripe)" ligado ao portal.
+  - **`WebhookSimulatorDrawer.tsx`:** Isolado para execução exclusiva em ambiente de desenvolvimento (`import.meta.env.DEV`).
+- **Validação de Build:** `npm.cmd run build` executado e aprovado com **Exit Code 0** (200 módulos, zero erros de compilação).
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 01:15 (Africa/Maputo).

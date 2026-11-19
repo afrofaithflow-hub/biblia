@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { getUserProgressTracks, getReviewQueue } from '../../lib/gameSession';
-import { CANONICAL_WORLDS, WORLD_1_PHASES } from '../../data/canonicalGameData';
+import { CANONICAL_WORLDS } from '../../data/canonicalGameData';
+import { getCurrentJourneyPhase, getJourneyPhases, getWorldCompletion } from '../../lib/gameJourney';
 
 interface GameDashboardProps {
   onNavigate: (screen: string) => void;
@@ -15,9 +16,9 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
 
   // Mundo e fase actuais
   const currentWorld = CANONICAL_WORLDS[0]; // futuramente: derivar do progresso
-  const currentPhase = WORLD_1_PHASES.find((p) => p.isUnlocked && !p.isCompleted) ?? WORLD_1_PHASES[0];
-  const completedCount = WORLD_1_PHASES.filter((p) => p.isCompleted).length;
-  const progressPct = Math.round((completedCount / currentWorld.totalPhases) * 100);
+  const journeyPhases = getJourneyPhases(currentWorld.id);
+  const currentPhase = getCurrentJourneyPhase();
+  const progressPct = getWorldCompletion(currentWorld.id);
 
   // Revisões pendentes
   const pendingReviews = reviewQueue.filter((r) => r.nextReviewDate <= new Date().toISOString()).length;
@@ -32,13 +33,9 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
             className="relative group cursor-pointer"
             title="Meu Perfil"
           >
-            <div
-              className="size-10 rounded-full bg-cover bg-center border-2 border-sacred-brand dark:border-sacred-neon"
-              style={{
-                backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAr--EFhANXtDV9oTFLCtoed6XR_AcJmqa9e-X2W3EQt8KJrF2-_rc0fkT_gEhZod62O86r9kzVtVhKLX1LnUq6qkXxqjQgxnLQLMF64SO2VIMCNsjtGkVipBEoyPDa0PQpQoW1YMXhxjm4COMk1EN_P0hX0EmhbHrgAbvaAfpq8DUInOiHK6ao8ltQ3McXv18Hzfp-H4Mw1g0zOUusgwpBmhDXRInwJX9xvldUO_uKc2aJFhFhdIH5nCRU3JVaQX-b80PpqSQO1rs')`,
-              }}
-            />
-            <div className="absolute bottom-0 right-0 size-2.5 bg-green-500 border-2 border-bg-canvas dark:border-dark-canvas rounded-full" />
+            <div className="size-10 rounded-full border-2 border-sacred-brand bg-sacred-brand/10 text-sacred-brand dark:border-sacred-neon dark:text-sacred-neon flex items-center justify-center">
+              <span className="material-symbols-outlined text-xl">person</span>
+            </div>
           </button>
 
           {/* Nível de caminhada + XP */}
@@ -195,65 +192,15 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
           </div>
         </div>
 
-        {/* §4.1 — 4. Modos Livres */}
-        <div className="space-y-2.5">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            Modos de Desafio Bíblico
-          </h3>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <div
-              onClick={() => onNavigate('screen-jogo-quiz')}
-              className="p-3.5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 shadow-sm hover:border-sacred-brand cursor-pointer flex flex-col gap-2 transition-all active:scale-95"
-            >
-              <div className="size-9 rounded-xl bg-sacred-brand/10 dark:bg-sacred-neon/15 text-sacred-brand dark:text-sacred-neon flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl">quiz</span>
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Quiz Cronometrado</h4>
-                <p className="text-[10px] text-slate-400 mt-0.5">4 alternativas rápidas</p>
-              </div>
+        {/* O percurso, não o jogador, escolhe a variação pedagógica. */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-surface-dark">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sacred-light text-sacred-brand dark:bg-sacred-neon/15 dark:text-sacred-neon">
+              <span className="material-symbols-outlined">auto_awesome</span>
             </div>
-
-            <div
-              onClick={() => onNavigate('screen-jogo-tf')}
-              className="p-3.5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 shadow-sm hover:border-sacred-brand cursor-pointer flex flex-col gap-2 transition-all active:scale-95"
-            >
-              <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl">thumbs_up_down</span>
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Verdadeiro ou Falso</h4>
-                <p className="text-[10px] text-slate-400 mt-0.5">Discernimento rápido</p>
-              </div>
-            </div>
-
-            <div
-              onClick={() => onNavigate('screen-jogo-fill')}
-              className="p-3.5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 shadow-sm hover:border-sacred-brand cursor-pointer flex flex-col gap-2 transition-all active:scale-95"
-            >
-              <div className="size-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl">extension</span>
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Completar Versículo</h4>
-                <p className="text-[10px] text-slate-400 mt-0.5">Memorização bíblica</p>
-              </div>
-            </div>
-
-            <div
-              onClick={() => onNavigate('screen-desafio-diario')}
-              className="p-3.5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/10 shadow-sm hover:border-sacred-brand cursor-pointer flex flex-col gap-2 transition-all active:scale-95"
-            >
-              <div className="size-9 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  local_fire_department
-                </span>
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">Desafio Diário</h4>
-                <p className="text-[10px] text-slate-400 mt-0.5">Mantenha a chama acesa</p>
-              </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">Uma jornada que varia com propósito</h3>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">Cada fase alterna compreensão, discernimento e memorização. O próximo exercício é escolhido pela lição — não precisa decidir o tipo de desafio.</p>
             </div>
           </div>
         </div>
@@ -300,7 +247,7 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
           <div className="relative flex flex-col gap-4 pl-3">
             <div className="absolute left-[23px] top-4 bottom-8 w-0.5 border-l-2 border-dashed border-slate-300 dark:border-slate-700 -z-10" />
 
-            {WORLD_1_PHASES.slice(0, 5).map((phase) => {
+            {journeyPhases.slice(0, 5).map((phase) => {
               const isActive = phase.isUnlocked && !phase.isCompleted;
               const isDone = phase.isCompleted;
               const isLocked = !phase.isUnlocked;

@@ -2,9 +2,10 @@
  * BiblIA — Exercício de Completar Versículo (Memorização Sagrada)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { GameQuestion } from '../../../types/gameContracts';
 import { gameSfx } from '../../../lib/gameSoundEffects';
+import { shuffleArray } from '../../../lib/gameSession';
 
 interface FillBlanksExerciseProps {
   question: GameQuestion;
@@ -27,7 +28,12 @@ export const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
   }, [question.id, numBlanks]);
 
   const promptParts = question.prompt.split('___');
-  const options = question.options || [];
+  // Nunca expor a sequência correta no banco de palavras: cada questão recebe
+  // uma disposição aleatória estável durante a tentativa inteira.
+  const options = useMemo(
+    () => shuffleArray(question.options || []),
+    [question.id]
+  );
 
   const handleSelectWord = (word: string) => {
     if (isAnswered) return;

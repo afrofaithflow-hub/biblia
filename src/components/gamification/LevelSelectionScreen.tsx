@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { PhasePreviewModal } from './PhasePreviewModal';
-import { CANONICAL_WORLDS, WORLD_1_PHASES } from '../../data/canonicalGameData';
+import { CANONICAL_WORLDS } from '../../data/canonicalGameData';
 import { requestGameMode, getUserProgressTracks } from '../../lib/gameSession';
+import { getJourneyPhases } from '../../lib/gameJourney';
 import type { CanonicalPhase } from '../../types/gameContracts';
 
 interface LevelSelectionScreenProps {
@@ -19,7 +20,7 @@ const NODE_ICONS: Record<string, string> = {
 };
 
 /** Converte CanonicalPhase para o formato que PhasePreviewModal espera */
-function phaseToModalData(phase: CanonicalPhase) {
+function phaseToModalData(phase: CanonicalPhase, phases: CanonicalPhase[]) {
   return {
     title: phase.title,
     testament: 'Antigo Testamento',
@@ -31,8 +32,8 @@ function phaseToModalData(phase: CanonicalPhase) {
     summary: phase.description,
     tags: phase.topics,
     nextPhase:
-      WORLD_1_PHASES[phase.phaseNumber]
-        ? `Fase ${phase.phaseNumber + 1}: ${WORLD_1_PHASES[phase.phaseNumber].title}`
+      phases[phase.phaseNumber]
+        ? `Fase ${phase.phaseNumber + 1}: ${phases[phase.phaseNumber].title}`
         : 'Próximo Mundo',
     coverImg:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuAViOHingDmjXVbtCO-vpb-vSnrN_09QBjjXPNBg7t0fHT8Zg_Nbrn7z5jz4FoJ1cgg56muFWIiSlH8QcIwEQ8uS7t1uhmrr9LSTeW7Vw_-XYdH3edr7Ez_YOSmjphroa3iEfhT3Jepi5woyk_31k-jRzYTZeZ3yggaY_iENKc2dlsL8ZRuXAtUZvHsSstJyLALHC-qE-Q5GPR2wFxmuFoW8YvVFHphqUr04qklrTjVhpcLbuE4GE_xjMkI80_qhu3jcf8Mt85Qu_o',
@@ -46,14 +47,15 @@ export const LevelSelectionScreen: React.FC<LevelSelectionScreenProps> = ({
   const [selectedPhase, setSelectedPhase] = useState<CanonicalPhase | null>(null);
 
   const world = CANONICAL_WORLDS[0]; // Mundo 1 — Criação e Éden
+  const journeyPhases = getJourneyPhases(world.id);
   const tracks = getUserProgressTracks();
 
   // Contagem de estrelas conquistadas no Mundo 1
-  const earnedStars = WORLD_1_PHASES.reduce((acc, p) => acc + (p.stars ?? 0), 0);
+  const earnedStars = journeyPhases.reduce((acc, p) => acc + (p.stars ?? 0), 0);
   const totalStars = world.totalPhases * 3;
 
   // Progresso percentual: fases concluídas / total
-  const completedCount = WORLD_1_PHASES.filter((p) => p.isCompleted).length;
+  const completedCount = journeyPhases.filter((p) => p.isCompleted).length;
   const progressPct = Math.round((completedCount / world.totalPhases) * 100);
 
   const handleLevelClick = (phase: CanonicalPhase) => {
@@ -148,10 +150,10 @@ export const LevelSelectionScreen: React.FC<LevelSelectionScreenProps> = ({
         {/* Vertical dashed connecting line */}
         <div className="absolute left-1/2 top-4 bottom-12 w-0.5 border-l-2 border-dashed border-slate-300 dark:border-white/15 -translate-x-1/2 pointer-events-none" />
 
-        {WORLD_1_PHASES.map((phase, index) => {
+        {journeyPhases.map((phase, index) => {
           const isLeft = index % 2 === 0;
           const isCurrent = phase.isUnlocked && !phase.isCompleted;
-          const isFirst = WORLD_1_PHASES.findIndex((p) => p.isUnlocked && !p.isCompleted) === index;
+          const isFirst = journeyPhases.findIndex((p) => p.isUnlocked && !p.isCompleted) === index;
           const nodeIcon = NODE_ICONS[phase.nodeType] ?? 'help';
 
           if (phase.isUnlocked && !phase.isCompleted && isFirst) {
@@ -277,7 +279,7 @@ export const LevelSelectionScreen: React.FC<LevelSelectionScreenProps> = ({
         isOpen={Boolean(selectedPhase)}
         onClose={() => setSelectedPhase(null)}
         onStart={handleStart}
-        phaseData={selectedPhase ? phaseToModalData(selectedPhase) : undefined}
+        phaseData={selectedPhase ? phaseToModalData(selectedPhase, journeyPhases) : undefined}
       />
     </div>
   );

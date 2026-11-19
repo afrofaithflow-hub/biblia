@@ -7,7 +7,7 @@
  * Data: 17 de novembro de 2026 | Antigravity AI Engine
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { GameMode } from '../../types/gameContracts';
 import { useGameSession } from '../../hooks/useGameSession';
 import { audioEngine } from '../../lib/audioEngine';
@@ -15,6 +15,7 @@ import { gameSfx } from '../../lib/gameSoundEffects';
 import { MultipleChoiceExercise } from './exercises/MultipleChoiceExercise';
 import { TrueFalseExercise } from './exercises/TrueFalseExercise';
 import { FillBlanksExercise } from './exercises/FillBlanksExercise';
+import { formatGameTime, getQuestionTimeLimit } from '../../lib/gameTiming';
 
 interface GameLessonHostProps {
   onNavigate: (screen: string) => void;
@@ -31,12 +32,17 @@ export const GameLessonHost: React.FC<GameLessonHostProps> = ({
   const [isReadingAudio, setIsReadingAudio] = useState(false);
   const [hintText, setHintText] = useState<string | null>(null);
   const [isSfxMuted, setIsSfxMuted] = useState(gameSfx.getMuted());
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [didTimeOut, setDidTimeOut] = useState(false);
+  const pausedAtRef = useRef<number | null>(null);
+  const submitTimeoutRef = useRef<() => void>(() => undefined);
 
   const {
     questions,
     question,
     state,
     submit,
+    submitTimeout,
     advance,
     useHint,
     restoreHeartViaReading,
@@ -48,6 +54,52 @@ export const GameLessonHost: React.FC<GameLessonHostProps> = ({
   const currentNum = state.questionIndex + 1;
   const progressPercent = Math.round(((currentNum - 1) / totalQuestions) * 100);
   const isAnswered = state.status === 'answered';
+  const timeLimit = getQuestionTimeLimit(question);
+
+  useEffect(() => {
+    submitTimeoutRef.current = submitTimeout;
+  }, [submitTimeout]);
+
+  // Relógio único, justo e pausado quando a aplicação deixa de estar visível.
+  // A validação usa uma data limite real, para não atrasar em aparelhos lentos.
+  useEffect(() => {
+    if (state.status !== 'playing') return;
+    let deadline = Date.now() + timeLimit * 1000;
+    let expired = false;
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining === 0 && !expired) {
+        expired = true;
+        setDidTimeOut(true);
+        gameSfx.play('wrong');
+        submitTimeoutRef.current();
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        pausedAtRef.current = Date.now();
+        return;
+      }
+      if (pausedAtRef.current) {
+        deadline += Date.now() - pausedAtRef.current;
+        pausedAtRef.current = null;
+      }
+      tick();
+    };
+
+    setDidTimeOut(false);
+    tick();
+    const interval = window.setInterval(tick, 250);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      pausedAtRef.current = null;
+    };
+  }, [question.id, state.status, timeLimit]);
 
   // Leitura acessível por voz do enunciado e referência
   const handleReadAloud = async () => {
@@ -87,6 +139,7 @@ export const GameLessonHost: React.FC<GameLessonHostProps> = ({
   const handleContinue = () => {
     setSelectedAnswer(null);
     setHintText(null);
+    setDidTimeOut(false);
     const result = advance();
     if (result === 'completed') {
       onNavigate('screen-recompensa');
@@ -133,6 +186,19 @@ export const GameLessonHost: React.FC<GameLessonHostProps> = ({
 
           {/* Controles de Som & Vidas */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Tempo adaptado ao exercício e à dificuldade */}
+            <div
+              className={`flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-black tabular-nums transition-colors ${
+                timeLeft <= 5
+                  ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                  : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300'
+              }`}
+              role="timer"
+              aria-label={`${timeLeft} segundos restantes`}
+            >
+              <span className="material-symbols-outlined text-[15px]">timer</span>
+              <span>{formatGameTime(timeLeft)}</span>
+            </div>
             {/* TTS Áudio */}
             <button
               onClick={handleReadAloud}
@@ -259,7 +325,11 @@ export const GameLessonHost: React.FC<GameLessonHostProps> = ({
                       : 'text-rose-900 dark:text-rose-100'
                   }`}
                 >
-                  {state.wasCorrect ? 'Excelente! Resposta correta' : 'Quase lá! Vamos aprender'}
+                  {state.wasCorrect
+                    ? 'Excelente! Resposta correta'
+                    : didTimeOut
+                    ? 'O tempo terminou — vamos aprender'
+                    : 'Quase lá! Vamos aprender'}
                 </h4>
                 <p
                   className={`text-xs mt-0.5 leading-relaxed ${

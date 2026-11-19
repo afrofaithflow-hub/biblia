@@ -18,7 +18,7 @@ interface AuthContextType {
     displayName: string
   ) => Promise<{ error: AuthError | Error | null }>;
   signInWithOAuth: (
-    provider: 'google' | 'apple' | 'facebook'
+    provider: 'google' | 'apple'
   ) => Promise<{ error: AuthError | Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | Error | null }>;
@@ -26,8 +26,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Local storage key for sandbox guest sessions
-const SANDBOX_USER_KEY = 'biblia_sandbox_user';
+const UNAVAILABLE_AUTH_ERROR = new Error(
+  'A ligação a contas ainda não está configurada. Pode continuar como visitante neste dispositivo.'
+);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -57,16 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subscription.unsubscribe();
       };
     } else {
-      // 3. Sandbox / Local offline-first session restoration
-      const stored = localStorage.getItem(SANDBOX_USER_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setUser(parsed);
-        } catch {
-          localStorage.removeItem(SANDBOX_USER_KEY);
-        }
-      }
+      // Um visitante local não é uma conta fictícia nem cria sessão simulada.
       setLoading(false);
     }
   }, []);
@@ -76,16 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithEmail = async (email: string, password: string) => {
     if (!isSupabaseConfigured) {
-      // Sandbox simulation: create local mock user
-      const mockUser = {
-        id: `usr-sandbox-${Date.now()}`,
-        email,
-        user_metadata: { display_name: email.split('@')[0] || 'Discípulo' },
-      } as unknown as User;
-      setUser(mockUser);
-      localStorage.setItem(SANDBOX_USER_KEY, JSON.stringify(mockUser));
-      closeAuthModal();
-      return { error: null };
+      return { error: UNAVAILABLE_AUTH_ERROR };
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -95,15 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUpWithEmail = async (email: string, password: string, displayName: string) => {
     if (!isSupabaseConfigured) {
-      const mockUser = {
-        id: `usr-sandbox-${Date.now()}`,
-        email,
-        user_metadata: { display_name: displayName.trim() || 'Discípulo' },
-      } as unknown as User;
-      setUser(mockUser);
-      localStorage.setItem(SANDBOX_USER_KEY, JSON.stringify(mockUser));
-      closeAuthModal();
-      return { error: null };
+      return { error: UNAVAILABLE_AUTH_ERROR };
     }
 
     const { data, error } = await supabase.auth.signUp({
@@ -130,17 +105,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const signInWithOAuth = async (provider: 'google' | 'apple' | 'facebook') => {
+  const signInWithOAuth = async (provider: 'google' | 'apple') => {
     if (!isSupabaseConfigured) {
-      const mockUser = {
-        id: `usr-oauth-${Date.now()}`,
-        email: `usuario.${provider}@biblia.app`,
-        user_metadata: { display_name: `Discípulo (${provider === 'facebook' ? 'Facebook' : provider.toUpperCase()})` },
-      } as unknown as User;
-      setUser(mockUser);
-      localStorage.setItem(SANDBOX_USER_KEY, JSON.stringify(mockUser));
-      closeAuthModal();
-      return { error: null };
+      return { error: UNAVAILABLE_AUTH_ERROR };
     }
 
     const { error } = await supabase.auth.signInWithOAuth({
@@ -155,8 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     if (isSupabaseConfigured) {
       await supabase.auth.signOut();
-    } else {
-      localStorage.removeItem(SANDBOX_USER_KEY);
     }
     setUser(null);
     setSession(null);

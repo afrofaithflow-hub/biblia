@@ -76,20 +76,25 @@ export class SubscriptionService {
   public static getInitialProfile(): UserProfile {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_PROFILE);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const profile = JSON.parse(stored) as UserProfile;
+        // Remove o antigo perfil demonstrativo, que nunca representou uma conta real.
+        if (profile.id !== 'usr-default-01') return profile;
+        localStorage.removeItem(STORAGE_KEY_PROFILE);
+      }
     } catch {
       // fallback
     }
 
     const defaultProfile: UserProfile = {
-      id: 'usr-default-01',
-      email: 'emanuel@biblia.app',
-      display_name: 'Emanuel',
-      avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      id: 'visitor-local',
+      email: '',
+      display_name: 'Visitante',
+      avatar_url: '',
       plan_tier: 0, // Starts FREE
       is_master_badge: false,
-      xp: 1250,
-      streak_days: 12,
+      xp: 0,
+      streak_days: 0,
       streak_frozen: false,
       streak_last_date: new Date().toISOString().split('T')[0],
       active_subscription: undefined,
