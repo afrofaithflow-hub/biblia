@@ -849,3 +849,32 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Removido `maximum-scale=1.0, user-scalable=no`, restaurando a capacidade de zoom nativo por pinça conforme as diretrizes WCAG 2.1 AA.
 - **Validação de Build:** `npm.cmd run build` aprovado com **Exit Code 0** (200 módulos transformados, zero erros de compilação).
 - **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 01:36 (Africa/Maputo).
+
+
+
+### 20/11/2026 — 07:40 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Execução Concluída do Plano de Dados Reais, Conta Opcional e Migração de Visitante (D0 a D5)
+- **Fase D0 (Inventário e Erradicação Definitiva de Mocks):**
+  - Removido o array estático `MOCK_RANKING` em `src/components/gamification/GameLeaderboard.tsx`.
+  - Integrada a chamada real à função `getLeagueRanking()` de `src/lib/gameSocialService.ts`.
+  - Implementados estados explícitos e honestos: carregamento com spinner, pódio dinâmico (apenas quando existem posições calculadas) e estado vazio convidativo.
+- **Fase D1 (Schema Supabase e Idempotência):**
+  - Criada a migração canónica `supabase/migrations/20261120000002_reading_userData_and_guest_migration.sql` com tabelas de leitura, favoritos, notas, destaques, migrações de visitante e RPC `migrate_guest_data`.
+- **Fase D2 (Visitante Local e Migração de Progresso):**
+  - Criado `src/lib/guestMigrationService.ts` com `installation_id` estável, resumo pré-migração e migração atómica.
+- **Fase D3 (Autenticação sem Senha / OTP de 6 Dígitos e Google):**
+  - Reformulada `src/components/auth/AuthModal.tsx` com Google One-Click e E-mail OTP de 6 dígitos com temporizador de 60 segundos.
+- **Fase D4 (Offline-First e Sincronização):**
+  - `AuthContext.tsx` dispara automaticamente a migração na sessão sem duplicar XP.
+- **Fase D5 (Convites e Partilha Nativa):**
+  - `GameLeaderboard.tsx` usa `navigator.share` (Web Share API) com fallback para clipboard.
+- **Validação de Build:** `npm.cmd run build` aprovado com **Exit Code 0** (201 módulos transformados, zero erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 07:40 (Africa/Maputo).
+
+
+### 20/11/2026 — 07:44 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Blindagem da Navbar no Tema Noturno e Prontidão de Deploy
+- **Correção da Navbar no Tema Noturno (`App.tsx` & `src/index.css`):**
+  - Substituída a classe composta `glass-surface` por classes nativas Tailwind diretas: `bg-white/95 dark:bg-[#081413]/95 backdrop-blur-md` para eliminar qualquer dependência de especificidade CSS herdada.
+  - Reforçadas as regras `.dark .glass-surface` e `.glass-surface-dark` em `src/index.css` com `!important` explícito para prevenir regressões.
+- **Commit:** `3b68221` — `feat(data+ux): D0-D5 dados reais, conta opcional, migração de visitante e navbar noturna blindada`.
+- **Validação de Build:** `npm.cmd run build` aprovado com **Exit Code 0**.
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 07:44 (Africa/Maputo).
