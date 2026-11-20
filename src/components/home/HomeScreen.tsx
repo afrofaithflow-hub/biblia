@@ -75,7 +75,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas text-slate-900 dark:text-slate-100 font-display transition-colors duration-300 pb-28">
+    <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas text-slate-900 dark:text-slate-100 font-display transition-colors duration-300 pb-36">
       {/* ── Header Section (Protótipo 2.1) ── */}
       <header className="flex items-center justify-between px-5 pt-4 pb-3 sticky top-0 z-20 bg-bg-canvas/95 dark:bg-dark-canvas/95 backdrop-blur-md border-b border-slate-200/60 dark:border-dark-border transition-colors">
         <div className="flex flex-col gap-0.5 text-left animate-fade-in">

@@ -43,9 +43,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
   const userEmail = user?.email || 'Progresso guardado neste dispositivo';
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas text-slate-800 dark:text-slate-100 font-display transition-colors duration-200 pb-28">
-      {/* Top Header */}
-      <header className="flex items-center justify-between p-4 pt-5 bg-transparent sticky top-0 z-10 backdrop-blur-md border-b border-slate-200/60 dark:border-dark-border">
+    <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden bg-bg-canvas dark:bg-dark-canvas text-slate-800 dark:text-slate-100 font-display transition-colors duration-200">
+      {/* Top Header (Fixo sem Jitter) */}
+      <header className="shrink-0 flex items-center justify-between p-4 pt-4 bg-bg-canvas/95 dark:bg-dark-canvas/95 backdrop-blur-md border-b border-slate-200/60 dark:border-dark-border z-10">
         <button
           onClick={() => onNavigate('screen-home')}
           className="flex size-10 items-center justify-center rounded-full text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
@@ -80,8 +80,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center px-6 pt-2 overflow-y-auto no-scrollbar w-full max-w-md mx-auto">
+      {/* Main Content — Único container de rolagem vertical */}
+      <main className="flex-1 min-h-0 flex flex-col items-center px-4 sm:px-6 pt-3 pb-36 overflow-y-auto no-scrollbar w-full max-w-md mx-auto">
         {/* User Identity Section (Protótipo 2.1 — Gold Ring Avatar) */}
         <section className="flex flex-col items-center gap-3 mb-6 w-full animate-fade-in text-center">
           <div

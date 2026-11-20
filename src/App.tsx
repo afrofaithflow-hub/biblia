@@ -260,9 +260,9 @@ const AppContent: React.FC = () => {
           <MiniAudioPlayer onExpand={() => navigate('screen-audio')} />
         )}
 
-        {/* ── Bottom Navigation Bar (Stitch Design Guide: 72px com Botão Central Flutuante) ── */}
+        {/* ── Bottom Navigation Bar (Adaptativa Claro & Noturno com Safe Area) ── */}
         {showBottomNav && (
-          <nav className="glass-surface dark:glass-surface-dark border-t border-slate-200/80 dark:border-dark-border pb-safe z-30 shrink-0 h-[72px] px-2 relative w-full">
+          <nav className="glass-surface dark:bg-[#081413]/95 border-t border-slate-200/80 dark:border-[#1a3330] pb-safe z-30 shrink-0 h-[72px] px-2 relative w-full transition-colors duration-300">
             <div className="max-w-md md:max-w-xl lg:max-w-2xl mx-auto w-full h-full">
               <ul className="flex justify-around items-center w-full h-full">
                 {/* 1. Início */}
@@ -272,7 +272,7 @@ const AppContent: React.FC = () => {
                     className={`w-full flex flex-col items-center justify-center gap-1 transition-colors ${
                       activeTab === 'home'
                         ? 'text-sacred-brand dark:text-sacred-neon font-bold'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                     }`}
                   >
                     <span
@@ -281,7 +281,7 @@ const AppContent: React.FC = () => {
                     >
                       home
                     </span>
-                    <span className="text-[10px] tracking-tight">Início</span>
+                    <span className="text-[11px] tracking-tight">Início</span>
                   </button>
                 </li>
 
@@ -292,7 +292,7 @@ const AppContent: React.FC = () => {
                     className={`w-full flex flex-col items-center justify-center gap-1 relative transition-colors ${
                       activeTab === 'audio'
                         ? 'text-sacred-brand dark:text-sacred-neon font-bold'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                     }`}
                   >
                     <span
@@ -304,7 +304,7 @@ const AppContent: React.FC = () => {
                     {isPlaying && activeTab !== 'audio' && (
                       <span className="absolute top-0 right-4 size-2 rounded-full bg-emerald-500 animate-ping" />
                     )}
-                    <span className="text-[10px] tracking-tight">Ouvir</span>
+                    <span className="text-[11px] tracking-tight">Ouvir</span>
                   </button>
                 </li>
 
@@ -313,10 +313,10 @@ const AppContent: React.FC = () => {
                   <div className="relative -top-4 flex flex-col items-center">
                     <button
                       onClick={() => navigate('screen-game-dashboard')}
-                      className={`size-[54px] rounded-full transition-transform active:scale-95 flex items-center justify-center shadow-duo-primary dark:shadow-[0_4px_0_#0b221f] ${
+                      className={`size-[54px] rounded-full transition-transform active:scale-95 flex items-center justify-center shadow-duo-primary ${
                         activeTab === 'jogo'
-                          ? 'bg-gradient-to-tr from-sacred-brand to-sacred-neon text-white dark:text-slate-950 border-4 border-bg-canvas dark:border-dark-canvas shadow-glow-teal ring-2 ring-sacred-neon/40'
-                          : 'bg-gradient-to-tr from-sacred-deep to-sacred-brand text-white border-4 border-bg-canvas dark:border-dark-canvas hover:brightness-110'
+                          ? 'bg-gradient-to-tr from-sacred-brand to-sacred-neon text-white dark:text-slate-950 border-4 border-white dark:border-[#081413] shadow-glow-teal ring-2 ring-sacred-neon/50'
+                          : 'bg-gradient-to-tr from-sacred-deep to-sacred-brand text-white border-4 border-white dark:border-[#081413] hover:brightness-110 shadow-sm'
                       }`}
                       title="Jornada & Game Bíblico"
                     >
@@ -327,7 +327,7 @@ const AppContent: React.FC = () => {
                         sports_esports
                       </span>
                     </button>
-                    <span className="text-[10px] font-bold text-sacred-brand dark:text-sacred-neon mt-0.5">
+                    <span className="text-[11px] font-bold text-sacred-brand dark:text-sacred-neon mt-0.5">
                       Jornada
                     </span>
                   </div>
@@ -340,7 +340,7 @@ const AppContent: React.FC = () => {
                     className={`w-full flex flex-col items-center justify-center gap-1 transition-colors ${
                       activeTab === 'biblia'
                         ? 'text-sacred-brand dark:text-sacred-neon font-bold'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                     }`}
                   >
                     <span
@@ -349,7 +349,7 @@ const AppContent: React.FC = () => {
                     >
                       menu_book
                     </span>
-                    <span className="text-[10px] tracking-tight">Leitura</span>
+                    <span className="text-[11px] tracking-tight">Leitura</span>
                   </button>
                 </li>
 
@@ -360,7 +360,7 @@ const AppContent: React.FC = () => {
                     className={`w-full flex flex-col items-center justify-center gap-1 transition-colors ${
                       activeTab === 'perfil'
                         ? 'text-sacred-brand dark:text-sacred-neon font-bold'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                     }`}
                   >
                     <span
@@ -369,7 +369,7 @@ const AppContent: React.FC = () => {
                     >
                       person
                     </span>
-                    <span className="text-[10px] tracking-tight">Perfil</span>
+                    <span className="text-[11px] tracking-tight">Perfil</span>
                   </button>
                 </li>
               </ul>

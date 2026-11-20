@@ -830,3 +830,22 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - **`WebhookSimulatorDrawer.tsx`:** Isolado para execução exclusiva em ambiente de desenvolvimento (`import.meta.env.DEV`).
 - **Validação de Build:** `npm.cmd run build` executado e aprovado com **Exit Code 0** (200 módulos, zero erros de compilação).
 - **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 01:15 (Africa/Maputo).
+
+
+### 20/11/2026 — 01:36 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Execução Concluída do Refinamento UX/UI Mobile First e Navbar Noturna Adaptativa
+- **Eliminação do Fundo Branco e Navbar Noturna Adaptativa (`src/index.css` e `src/App.tsx`):**
+  - Identificada a causa do corte em "fundo branco": a classe `.glass-surface` utilizava `rgba(255, 255, 255, 0.82)` rígido sem suporte a `dark:glass-surface-dark` em classes não-Tailwind.
+  - Atualizada a regra em `src/index.css` para aplicar automaticamente `rgba(8, 20, 19, 0.95)` sob `.dark` e `[data-theme="dark"]`, com borda esmeralda escura `rgba(26, 51, 48, 0.9)`.
+  - O container `<nav>` em `src/App.tsx` agora transiciona perfeitamente entre os modos claro e escuro, integrando-se sem emendas ao Obsidian Canvas.
+  - Melhorado o contraste e a legibilidade dos ícones e textos de aba (`text-[11px]`, `text-slate-400` inativo, `text-sacred-neon` ativo) e adicionado contorno nítido ao botão flutuante central "Jornada".
+- **Erradicação da Rolagem Dupla Concorrente (Double Scroll Trap):**
+  - **`GameDashboard.tsx`:** Removido o `overflow-y-auto` do container pai e travada a altura com `flex-1 min-h-0 overflow-hidden`. A tag `<main>` assume a autoridade única de rolagem vertical com `pb-36`, garantindo que o cabeçalho fique perfeitamente fixo sem jitter e que a lista de fases "Seu Caminho" role suavemente até ao final sem interrupções.
+  - **`ProfileScreen.tsx`:** Eliminada a rolagem dupla do container pai, fixado o cabeçalho no topo e mantido o `<main>` como container de rolagem única com `pb-36`.
+  - **`HomeScreen.tsx`, `LevelSelectionScreen.tsx` e `WorldMap.tsx`:** Ajustado o padding inferior para `pb-36` para evitar sobreposição de cartões pela barra de navegação e safe areas.
+- **Harmonização de Elementos Inferiores e Docking Seguro:**
+  - **`MiniAudioPlayer.tsx`:** Posição inferior agora calculada dinamicamente com `bottom: calc(76px + env(safe-area-inset-bottom, 0px))`, impedindo colisões com a barra de navegação em aparelhos com notch ou barra de gestos (iPhones e Android).
+  - **`WebhookSimulatorDrawer.tsx`:** O botão flutuante da sandbox dev foi relocado discretamente para o canto superior direito (`top-3 right-3`), deixando todo o rodapé desobstruído.
+- **Acessibilidade e Zoom (`index.html`):**
+  - Removido `maximum-scale=1.0, user-scalable=no`, restaurando a capacidade de zoom nativo por pinça conforme as diretrizes WCAG 2.1 AA.
+- **Validação de Build:** `npm.cmd run build` aprovado com **Exit Code 0** (200 módulos transformados, zero erros de compilação).
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 01:36 (Africa/Maputo).

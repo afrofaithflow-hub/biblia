@@ -73,7 +73,7 @@ export const LevelSelectionScreen: React.FC<LevelSelectionScreenProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas font-display text-slate-900 dark:text-white transition-colors duration-300 pb-28">
+    <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas font-display text-slate-900 dark:text-white transition-colors duration-300 pb-36">
       {/* Top Header */}
       <header className="sticky top-0 z-30 bg-bg-canvas/95 dark:bg-dark-canvas/95 backdrop-blur-md border-b border-slate-200 dark:border-white/10 w-full px-4 py-3">
         <div className="max-w-md md:max-w-xl lg:max-w-2xl mx-auto flex items-center justify-between">

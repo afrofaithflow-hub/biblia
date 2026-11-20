@@ -24,17 +24,17 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
   const pendingReviews = reviewQueue.filter((r) => r.nextReviewDate <= new Date().toISOString()).length;
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas font-display text-gray-900 dark:text-gray-100 transition-colors duration-300 pb-28">
-      {/* Top App Bar */}
-      <header className="flex items-center justify-between px-5 pt-5 pb-2 bg-bg-canvas/95 dark:bg-dark-canvas/95 backdrop-blur-md sticky top-0 z-20">
-        <div className="flex items-center gap-3">
+    <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden bg-bg-canvas dark:bg-dark-canvas font-display text-gray-900 dark:text-gray-100 transition-colors duration-300">
+      {/* Top App Bar (Estável e Fixo sem Jitter) */}
+      <header className="shrink-0 flex items-center justify-between px-3.5 sm:px-5 pt-3 pb-2.5 bg-bg-canvas/95 dark:bg-dark-canvas/95 backdrop-blur-md border-b border-slate-200/60 dark:border-dark-border z-20 transition-colors">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => onNavigate('screen-perfil')}
             className="relative group cursor-pointer"
             title="Meu Perfil"
           >
-            <div className="size-10 rounded-full border-2 border-sacred-brand bg-sacred-brand/10 text-sacred-brand dark:border-sacred-neon dark:text-sacred-neon flex items-center justify-center">
-              <span className="material-symbols-outlined text-xl">person</span>
+            <div className="size-9 sm:size-10 rounded-full border-2 border-sacred-brand bg-sacred-brand/10 text-sacred-brand dark:border-sacred-neon dark:text-sacred-neon flex items-center justify-center">
+              <span className="material-symbols-outlined text-lg sm:text-xl">person</span>
             </div>
           </button>
 
@@ -49,29 +49,29 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={() => onNavigate('screen-ranking')}
-            className="flex items-center gap-1 bg-white dark:bg-surface-dark rounded-full px-2.5 py-1 text-xs font-bold border border-slate-200 dark:border-white/10 shadow-sm text-gold-talent hover:border-gold-talent transition-all"
+            className="flex items-center gap-1 bg-white dark:bg-dark-card-base rounded-full px-2 sm:px-2.5 py-1 text-xs font-bold border border-slate-200 dark:border-dark-border shadow-sm text-gold-talent hover:border-gold-talent transition-all"
             title="Leaderboard / Classificação"
           >
-            <span className="material-symbols-outlined text-[16px]">leaderboard</span>
-            <span>Ranking</span>
+            <span className="material-symbols-outlined text-[15px]">leaderboard</span>
+            <span className="hidden min-[380px]:inline">Ranking</span>
           </button>
 
           <button
             onClick={() => onNavigate('screen-estatisticas')}
-            className="flex items-center gap-1 bg-white dark:bg-surface-dark rounded-full px-2.5 py-1 text-xs font-bold border border-slate-200 dark:border-white/10 shadow-sm text-sacred-brand dark:text-sacred-neon hover:border-sacred-brand transition-all"
+            className="flex items-center gap-1 bg-white dark:bg-dark-card-base rounded-full px-2 sm:px-2.5 py-1 text-xs font-bold border border-slate-200 dark:border-dark-border shadow-sm text-sacred-brand dark:text-sacred-neon hover:border-sacred-brand transition-all"
             title="Estatísticas do Jogador"
           >
-            <span className="material-symbols-outlined text-[16px]">bar_chart</span>
-            <span>Stats</span>
+            <span className="material-symbols-outlined text-[15px]">bar_chart</span>
+            <span className="hidden min-[380px]:inline">Stats</span>
           </button>
 
           {/* Talentos Semanais (real) */}
-          <div className="flex items-center bg-white dark:bg-surface-dark rounded-full px-3 py-1 shadow-sm border border-slate-200 dark:border-white/10">
+          <div className="flex items-center bg-white dark:bg-dark-card-base rounded-full px-2.5 sm:px-3 py-1 shadow-sm border border-slate-200 dark:border-dark-border">
             <span
-              className="material-symbols-outlined text-gold-radiant mr-1 text-[18px]"
+              className="material-symbols-outlined text-gold-radiant mr-1 text-[16px] sm:text-[18px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
               diamond
@@ -81,8 +81,8 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
         </div>
       </header>
 
-      {/* Main Content Area — hierarquia §4.1 */}
-      <main className="flex-1 overflow-y-auto no-scrollbar px-5 pt-2 pb-8 space-y-5 max-w-md mx-auto w-full">
+      {/* Main Content Area — Único container de rolagem vertical (sem corte de conteúdo) */}
+      <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 sm:px-5 pt-3 pb-36 space-y-5 max-w-md mx-auto w-full">
 
         {/* Hero */}
         <div className="text-center">

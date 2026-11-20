@@ -25,7 +25,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({ onNavigate, showToast }) => 
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas font-display text-slate-900 dark:text-slate-100 transition-colors duration-300 pb-28">
+    <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas font-display text-slate-900 dark:text-slate-100 transition-colors duration-300 pb-36">
       {/* Sticky Header */}
       <header className="sticky top-0 z-30 bg-bg-canvas/95 dark:bg-dark-canvas/95 backdrop-blur-sm border-b border-slate-200 dark:border-white/10 transition-colors">
         <div className="flex items-center justify-between px-4 h-14">

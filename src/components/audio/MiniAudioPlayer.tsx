@@ -24,7 +24,10 @@ export const MiniAudioPlayer: React.FC<MiniAudioPlayerProps> = ({ onExpand }) =>
   };
 
   return (
-    <div className="fixed bottom-[74px] left-0 right-0 max-w-[430px] mx-auto px-3 z-30 pointer-events-none animate-fade-in">
+    <div
+      style={{ bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))' }}
+      className="fixed left-0 right-0 max-w-[430px] mx-auto px-3 z-30 pointer-events-none animate-fade-in"
+    >
       <div className="pointer-events-auto relative rounded-2xl bg-white/95 dark:bg-dark-card-base/95 backdrop-blur-md border border-slate-200/80 dark:border-dark-border shadow-sacred-floating dark:shadow-card-dark flex items-center justify-between gap-3 p-2.5 overflow-hidden">
         {/* Scrubber progress line at the top */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-slate-100 dark:bg-slate-800">

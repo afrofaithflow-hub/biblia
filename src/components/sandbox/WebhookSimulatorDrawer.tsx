@@ -17,15 +17,15 @@ export const WebhookSimulatorDrawer: React.FC = () => {
 
   return (
     <>
-      {/* Floating Toggle Button */}
+      {/* Floating Toggle Button (Top Right Safe Anchor) */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-3 z-40 px-3 py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700 border border-slate-600 text-[11px] font-bold text-blue-400 shadow-xl backdrop-blur flex items-center gap-1.5 transition-all"
+        className="fixed top-3 right-3 z-40 px-2.5 py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-[10px] font-bold text-blue-400 shadow-xl backdrop-blur flex items-center gap-1.5 transition-all opacity-70 hover:opacity-100"
         title="Painel Sandbox de Subscrições & Webhooks"
       >
         <i className="fa-solid fa-code text-[10px]" />
         <span>Sandbox</span>
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
       </button>
 
       {/* Drawer Overlay */}
