@@ -262,7 +262,7 @@ const AppContent: React.FC = () => {
 
         {/* ── Bottom Navigation Bar (Adaptativa Claro & Noturno com Safe Area) ── */}
         {showBottomNav && (
-          <nav className="glass-surface dark:bg-[#081413]/95 border-t border-slate-200/80 dark:border-[#1a3330] pb-safe z-30 shrink-0 h-[72px] px-2 relative w-full transition-colors duration-300">
+          <nav className="bg-white/95 dark:bg-[#081413]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-[#1a3330] pb-safe z-30 shrink-0 h-[72px] px-2 relative w-full transition-colors duration-300">
             <div className="max-w-md md:max-w-xl lg:max-w-2xl mx-auto w-full h-full">
               <ul className="flex justify-around items-center w-full h-full">
                 {/* 1. Início */}

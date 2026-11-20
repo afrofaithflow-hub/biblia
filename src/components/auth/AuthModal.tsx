@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { getLocalUserDataSummary } from '../../lib/guestMigrationService';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -7,167 +8,187 @@ interface AuthModalProps {
   showToast: (msg: string, icon?: string) => void;
 }
 
+type AuthStep = 'choose' | 'otp_verify';
+
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, showToast }) => {
   const {
-    signInWithEmail,
-    signUpWithEmail,
     signInWithOAuth,
-    resetPassword,
+    signInWithOtp,
+    verifyOtp,
     isConfigured,
   } = useAuth();
 
-  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
-  const [displayName, setDisplayName] = useState('');
+  const [step, setStep] = useState<AuthStep>('choose');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [otpToken, setOtpToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(0);
+
+  // Resumo de dados locais a migrar
+  const localSummary = getLocalUserDataSummary();
+  const hasLocalData =
+    localSummary.bookmarksCount > 0 ||
+    localSummary.notesCount > 0 ||
+    localSummary.highlightsCount > 0 ||
+    localSummary.hasReadingProgress ||
+    localSummary.offlineAttemptsCount > 0;
+
+  // Temporizador de reenvio de OTP
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setInterval(() => setCountdown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Enviar código OTP por e-mail
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim() || !email.includes('@')) {
+      setErrorMsg('Por favor, informe um endereço de e-mail válido.');
+      return;
+    }
+
     setErrorMsg(null);
     setLoading(true);
 
     try {
-      if (mode === 'signin') {
-        const { error } = await signInWithEmail(email, password);
-        if (error) {
-          setErrorMsg(error.message || 'Erro ao entrar. Verifique seus dados.');
-        } else {
-          showToast('Bem-vindo(a) de volta ao BiblIA!', 'check_circle');
-          onClose();
-        }
-      } else if (mode === 'signup') {
-        if (!displayName.trim()) {
-          setErrorMsg('Por favor, informe seu nome.');
-          setLoading(false);
-          return;
-        }
-        const { error } = await signUpWithEmail(email, password, displayName);
-        if (error) {
-          setErrorMsg(error.message || 'Erro ao criar conta.');
-        } else {
-          showToast('Conta criada com sucesso! Graça e paz.', 'check_circle');
-          onClose();
-        }
-      } else if (mode === 'forgot') {
-        const { error } = await resetPassword(email);
-        if (error) {
-          setErrorMsg(error.message || 'Erro ao enviar e-mail de recuperação.');
-        } else {
-          showToast('Instruções de recuperação enviadas para o seu e-mail.', 'mail');
-          setMode('signin');
-        }
+      const { error } = await signInWithOtp(email);
+      if (error) {
+        setErrorMsg(error.message || 'Falha ao enviar código. Tente novamente.');
+      } else {
+        setStep('otp_verify');
+        setCountdown(60);
+        showToast('Código de 6 dígitos enviado para o seu e-mail!', 'mail');
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Ocorreu um erro inesperado.');
+    } catch {
+      setErrorMsg('Erro de rede ao contactar o servidor.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOAuth = async (provider: 'google' | 'apple') => {
+  // Validar código OTP de 6 dígitos
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpToken.trim() || otpToken.length < 6) {
+      setErrorMsg('Digite o código completo de 6 dígitos recebido no e-mail.');
+      return;
+    }
+
+    setErrorMsg(null);
+    setLoading(true);
+
+    try {
+      const { error } = await verifyOtp(email, otpToken);
+      if (error) {
+        setErrorMsg('Código incorreto ou expirado. Verifique e tente novamente.');
+      } else {
+        showToast('Bem-vindo(a) ao BiblIA! Progresso guardado.', 'check_circle');
+        onClose();
+      }
+    } catch {
+      setErrorMsg('Erro ao validar o código.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reenviar código OTP
+  const handleResend = async () => {
+    if (countdown > 0 || loading) return;
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const { error } = await signInWithOtp(email);
+      if (error) {
+        setErrorMsg('Não foi possível reenviar agora.');
+      } else {
+        setCountdown(60);
+        showToast('Novo código enviado com sucesso!', 'mail');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login com Google
+  const handleGoogleAuth = async () => {
     setErrorMsg(null);
     setLoading(true);
     try {
-      const { error } = await signInWithOAuth(provider);
+      const { error } = await signInWithOAuth('google');
       if (error) {
-        setErrorMsg(error.message || `Erro no login com ${provider}.`);
-      } else {
-        showToast(`Conectado via ${provider === 'google' ? 'Google' : 'Apple'}!`, 'check_circle');
-        onClose();
+        setErrorMsg(error.message || 'Falha ao autenticar com o Google.');
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Erro ao conectar conta social.');
+    } catch {
+      setErrorMsg('Erro ao conectar ao Google.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in font-display">
-      <div className="relative w-full max-w-sm bg-surface-light dark:bg-surface-dark rounded-3xl p-6 shadow-2xl border border-gray-200 dark:border-gray-800 transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in font-display">
+      <div className="relative w-full max-w-sm bg-white dark:bg-[#112321] rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-dark-border transition-colors">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 size-8 rounded-full bg-gray-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors"
+          className="absolute top-4 right-4 size-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors"
           title="Fechar"
         >
           <span className="material-symbols-outlined text-[18px]">close</span>
         </button>
 
-        {/* Brand Header */}
-        <div className="text-center mb-5">
-          <div className="inline-flex items-center justify-center size-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary mb-2">
-            <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-              menu_book
+        {/* ── Header ── */}
+        <div className="text-center pt-1 pb-4">
+          <div className="size-12 rounded-2xl bg-sacred-brand/10 dark:bg-sacred-neon/15 text-sacred-brand dark:text-sacred-neon mx-auto flex items-center justify-center mb-3">
+            <span className="material-symbols-outlined text-2xl">
+              {step === 'otp_verify' ? 'mark_email_read' : 'cloud_sync'}
             </span>
           </div>
+
           <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-            {mode === 'signin'
-              ? 'Acessar o BiblIA'
-              : mode === 'signup'
-              ? 'Comece sua Jornada'
-              : 'Recuperar Acesso'}
+            {step === 'otp_verify' ? 'Confirme o Código' : 'Guardar meu Progresso'}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {mode === 'signin'
-              ? 'Entre para sincronizar suas leituras e conquistas'
-              : mode === 'signup'
-              ? 'Crie seu perfil e junte-se à comunidade'
-              : 'Digite seu e-mail para redefinir sua senha'}
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
+            {step === 'otp_verify'
+              ? `Insira o código de 6 dígitos enviado para ${email}`
+              : 'Sincronize as suas leituras, notas e fases entre todos os seus dispositivos.'}
           </p>
-          {!isConfigured && (
-            <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/10 text-secondary border border-secondary/30">
-              Modo visitante — ligação a contas indisponível
-            </span>
-          )}
         </div>
 
-        {/* Tab Toggle (Sign in / Sign up) */}
-        {mode !== 'forgot' && (
-          <div className="flex bg-gray-100 dark:bg-slate-900 rounded-xl p-1 mb-4">
-            <button
-              type="button"
-              onClick={() => {
-                setMode('signin');
-                setErrorMsg(null);
-              }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                mode === 'signin'
-                  ? 'bg-surface-light dark:bg-surface-dark text-primary shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Entrar
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('signup');
-                setErrorMsg(null);
-              }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                mode === 'signup'
-                  ? 'bg-surface-light dark:bg-surface-dark text-primary shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Criar Conta
-            </button>
+        {/* ── Aviso Pré-Migração do Visitante ── */}
+        {hasLocalData && step === 'choose' && (
+          <div className="mb-4 p-3 rounded-2xl bg-sacred-light/60 dark:bg-sacred-deep/40 border border-sacred-brand/20 dark:border-sacred-neon/20 flex items-start gap-2.5 text-left">
+            <span className="material-symbols-outlined text-sacred-brand dark:text-sacred-neon text-lg shrink-0 mt-0.5">
+              verified
+            </span>
+            <div className="text-[11px] leading-snug text-slate-700 dark:text-teal-200">
+              <span className="font-bold">Progresso protegido: </span>
+              As suas fases concluídas e notas deste telemóvel serão vinculadas à sua conta.
+            </div>
           </div>
         )}
 
-        {/* OAuth Buttons */}
-        {mode !== 'forgot' && (
-          <div className="space-y-2 mb-4">
+        {/* ── Error Banner ── */}
+        {errorMsg && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2 animate-shake">
+            <span className="material-symbols-outlined text-base shrink-0">error</span>
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* ── ETAPA 1: ESCOLHA (Google ou E-mail OTP) ── */}
+        {step === 'choose' && (
+          <div className="space-y-4">
+            {/* Google One-Click Button */}
             <button
-              type="button"
-              onClick={() => handleOAuth('google')}
+              onClick={handleGoogleAuth}
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700/60 shadow-sm transition-all"
+              className="w-full py-3.5 px-4 rounded-2xl bg-white dark:bg-dark-card-base border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-800 dark:text-white font-bold text-xs shadow-sm hover:shadow transition-all flex items-center justify-center gap-2.5 active:scale-[0.98]"
             >
               <svg className="size-4" viewBox="0 0 24 24">
                 <path
@@ -189,134 +210,119 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, showToast
               </svg>
               <span>Continuar com Google</span>
             </button>
-            <button
-              type="button"
-              onClick={() => handleOAuth('apple')}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-black text-white text-xs font-bold hover:bg-gray-900 shadow-sm transition-all"
-            >
-              <span className="material-symbols-outlined text-[17px]">phone_iphone</span>
-              <span>Continuar com Apple</span>
-            </button>
-            <div className="flex items-center gap-3 my-3">
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">ou</span>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+
+            {/* Separador */}
+            <div className="flex items-center gap-3 my-2 text-slate-400">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+              <span className="text-[10px] uppercase font-bold tracking-wider">ou com e-mail</span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
+
+            {/* Formulário de E-mail Sem Palavra-passe (OTP) */}
+            <form onSubmit={handleRequestOtp} className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 block mb-1 text-left">
+                  Seu E-mail
+                </label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
+                    mail
+                  </span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="exemplo@gmail.com"
+                    required
+                    className="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-slate-800/80 text-xs text-slate-900 dark:text-white outline-none focus:border-sacred-brand dark:focus:border-sacred-neon transition-colors"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !email.trim()}
+                className="w-full btn-duo-primary dark:btn-duo-primary-dark text-xs py-3.5 font-bold flex items-center justify-center gap-2 shadow-duo-primary disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                    <span>A enviar código...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">send</span>
+                    <span>Receber código por e-mail</span>
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         )}
 
-        {/* Error message */}
-        {errorMsg && (
-          <div className="mb-3 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-300 text-xs flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] shrink-0">error</span>
-            <span className="leading-tight">{errorMsg}</span>
-          </div>
-        )}
-
-        {/* Form Fields */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {mode === 'signup' && (
+        {/* ── ETAPA 2: DIGITAÇÃO DO CÓDIGO OTP (6 DÍGITOS) ── */}
+        {step === 'otp_verify' && (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div>
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
-                Nome de Exibição
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 block mb-2 text-center">
+                Código de Verificação
               </label>
               <input
                 type="text"
-                required
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Ex: João da Silva"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary transition-all"
+                maxLength={6}
+                value={otpToken}
+                onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ''))}
+                placeholder="123456"
+                autoFocus
+                className="w-full text-center text-2xl tracking-[0.5em] font-mono font-bold py-3 px-4 rounded-xl border-2 border-sacred-brand dark:border-sacred-neon bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-sacred-neon/40 transition-all"
               />
             </div>
-          )}
 
-          <div>
-            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
-              E-mail
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu.email@exemplo.com"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary transition-all"
-            />
-          </div>
-
-          {mode !== 'forgot' && (
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Senha
-                </label>
-                {mode === 'signin' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('forgot');
-                      setErrorMsg(null);
-                    }}
-                    className="text-[11px] font-semibold text-primary hover:underline"
-                  >
-                    Esqueceu?
-                  </button>
-                )}
-              </div>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Pelo menos 6 caracteres"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-gray-700 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary transition-all"
-              />
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-3.5 rounded-xl bg-primary hover:bg-primary-dark disabled:opacity-50 text-white font-extrabold text-xs shadow-soft active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-            ) : mode === 'signin' ? (
-              <>
-                <span>Entrar no BiblIA</span>
-                <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
-              </>
-            ) : mode === 'signup' ? (
-              <>
-                <span>Cadastrar Gratuitamente</span>
-                <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
-              </>
-            ) : (
-              <span>Enviar Link de Recuperação</span>
-            )}
-          </button>
-        </form>
-
-        {/* Back to sign in for forgot mode */}
-        {mode === 'forgot' && (
-          <div className="text-center mt-3">
             <button
-              type="button"
-              onClick={() => {
-                setMode('signin');
-                setErrorMsg(null);
-              }}
-              className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1"
+              type="submit"
+              disabled={loading || otpToken.length < 6}
+              className="w-full btn-duo-primary dark:btn-duo-primary-dark text-xs py-3.5 font-bold flex items-center justify-center gap-2 shadow-duo-primary disabled:opacity-50"
             >
-              <span className="material-symbols-outlined text-[14px]">arrow_back</span>
-              <span>Voltar ao Login</span>
+              {loading ? (
+                <>
+                  <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                  <span>A validar código...</span>
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-sm">lock_open</span>
+                  <span>Confirmar e Entrar</span>
+                </>
+              )}
             </button>
-          </div>
+
+            {/* Ações de Reenvio e Voltar */}
+            <div className="flex items-center justify-between pt-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setStep('choose')}
+                className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 font-semibold text-[11px]"
+              >
+                ← Trocar e-mail
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={countdown > 0 || loading}
+                className={`font-bold text-[11px] ${
+                  countdown > 0 ? 'text-slate-400 cursor-not-allowed' : 'text-sacred-brand dark:text-sacred-neon hover:underline'
+                }`}
+              >
+                {countdown > 0 ? `Reenviar em ${countdown}s` : 'Reenviar código'}
+              </button>
+            </div>
+          </form>
         )}
+
+        <p className="text-[10px] text-slate-400 text-center mt-5 leading-relaxed">
+          Sem palavra-passe. Acesso seguro e direto com código temporário ou conta Google.
+        </p>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { UserProfile, PlanTier } from '../types/biblia';
+import { performGuestMigration } from '../lib/guestMigrationService';
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +18,8 @@ interface AuthContextType {
     password: string,
     displayName: string
   ) => Promise<{ error: AuthError | Error | null }>;
+  signInWithOtp: (email: string) => Promise<{ error: AuthError | Error | null }>;
+  verifyOtp: (email: string, token: string) => Promise<{ error: AuthError | Error | null }>;
   signInWithOAuth: (
     provider: 'google' | 'apple'
   ) => Promise<{ error: AuthError | Error | null }>;
@@ -43,6 +46,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        if (session?.user) {
+          performGuestMigration(session.user.id).catch(() => {});
+        }
       });
 
       // 2. Listen to real auth events
@@ -52,6 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        if (session?.user) {
+          performGuestMigration(session.user.id).catch(() => {});
+        }
       });
 
       return () => {
@@ -73,6 +82,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) closeAuthModal();
+    return { error };
+  };
+
+  const signInWithOtp = async (email: string) => {
+    if (!isSupabaseConfigured) {
+      return { error: UNAVAILABLE_AUTH_ERROR };
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: {
+        shouldCreateUser: true,
+      },
+    });
+    return { error };
+  };
+
+  const verifyOtp = async (email: string, token: string) => {
+    if (!isSupabaseConfigured) {
+      return { error: UNAVAILABLE_AUTH_ERROR };
+    }
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: token.trim(),
+      type: 'email',
+    });
+
+    if (!error && data.user) {
+      // Criação/atualização defensiva de perfil
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        email: data.user.email,
+        display_name: data.user.email?.split('@')[0] || 'Crente',
+        plan_tier: 0,
+      });
+      performGuestMigration(data.user.id).catch(() => {});
+      closeAuthModal();
+    }
+
     return { error };
   };
 
@@ -149,6 +198,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         closeAuthModal,
         signInWithEmail,
         signUpWithEmail,
+        signInWithOtp,
+        verifyOtp,
         signInWithOAuth,
         signOut,
         resetPassword,

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { getUserProgressTracks } from '../../lib/gameSession';
 import {
   getFriendsList,
+  getLeagueRanking,
   generateInviteCode,
   acceptInviteCode,
   joinChurchGroupByCode,
   blockUser,
   reportUser,
+  type LeagueEntry,
 } from '../../lib/gameSocialService';
 import type { SocialFriend } from '../../types/gameContracts';
 
@@ -33,16 +35,6 @@ const DIVISION_LABELS: Record<string, { label: string; color: string; icon: stri
   celestial: { label: 'Celestial', color: 'text-purple-500', icon: 'auto_awesome' },
 };
 
-const MOCK_RANKING = [
-  { rank: 1, name: 'Sara M.', title: 'Discípulo Nív 12', talents: 2150, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80', isChampion: true },
-  { rank: 2, name: 'João D.', title: 'Mensageiro Nív 15', talents: 1980, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', isChampion: false },
-  { rank: 3, name: 'Pedro K.', title: 'Discípulo Nív 9', talents: 1850, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', isChampion: false },
-  { rank: 4, name: 'Maria M.', title: 'Discípulo Nív 8', talents: 1750, avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80', isChampion: false },
-  { rank: 5, name: 'Davi R.', title: 'Caminho Nív 7', talents: 1620, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', isChampion: false },
-  { rank: 6, name: 'Tomé S.', title: 'Caminho Nív 6', talents: 1540, avatar: null, initials: 'TS', isChampion: false },
-  { rank: 7, name: 'Rute B.', title: 'Semente Nív 5', talents: 1490, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', isChampion: false },
-];
-
 export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, showToast }) => {
   const [tab, setTab] = useState<LeagueTab>('global');
   const [showInvitePanel, setShowInvitePanel] = useState(false);
@@ -50,16 +42,23 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
   const [generatedInvite, setGeneratedInvite] = useState<{ code: string; shareUrl: string } | null>(null);
   const [inputCode, setInputCode] = useState('');
   const [friends, setFriends] = useState<SocialFriend[]>([]);
+  const [ranking, setRanking] = useState<LeagueEntry[]>([]);
+  const [loadingRanking, setLoadingRanking] = useState(true);
 
   const tracks = getUserProgressTracks();
   const division = DIVISION_LABELS[tracks.weeklyLeague] ?? DIVISION_LABELS.disciple;
 
-  const top3 = MOCK_RANKING.slice(0, 3);
-  const rest = MOCK_RANKING.slice(3);
-
-  // Carrega lista de amigos
+  // Carrega dados reais de acordo com a aba activa
   useEffect(() => {
-    getFriendsList().then(setFriends).catch(() => { });
+    if (tab === 'global') {
+      setLoadingRanking(true);
+      getLeagueRanking()
+        .then(setRanking)
+        .catch(() => setRanking([]))
+        .finally(() => setLoadingRanking(false));
+    } else if (tab === 'friends') {
+      getFriendsList().then(setFriends).catch(() => setFriends([]));
+    }
   }, [tab]);
 
   const handleInvite = async (method: InviteMethod) => {
@@ -68,6 +67,22 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
       const invite = await generateInviteCode();
       if (invite) {
         setGeneratedInvite(invite);
+
+        // Suporte a Partilha Nativa Móvel (WhatsApp, Messenger, SMS, etc.)
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          try {
+            await navigator.share({
+              title: 'Junte-se a mim no BiblIA',
+              text: `Estou a aprender a Palavra no BiblIA. Conecte-se comigo pelo código ${invite.code}:`,
+              url: invite.shareUrl,
+            });
+            showToast('Convite partilhado!', 'share');
+            return;
+          } catch {
+            // Se o utilizador cancelar a folha de partilha nativa, prossegue para cópia
+          }
+        }
+
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(invite.shareUrl);
           showToast(`Link copiado: ${invite.shareUrl}`, 'content_copy');
@@ -214,79 +229,118 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
       {/* ── Área de Rolagem ── */}
       <main className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24">
         {tab === 'global' ? (
-          <>
-            {/* Pódio Top 3 */}
-            <div className="flex justify-center items-end gap-4 pt-4 pb-6">
-              {/* #2 */}
-              <div className="flex flex-col items-center">
-                <div className="relative">
-                  <div className="size-16 rounded-full border-2 border-slate-300 dark:border-slate-600 overflow-hidden">
-                    {top3[1].avatar ? (
-                      <img src={top3[1].avatar} alt={top3[1].name} className="size-full object-cover" />
-                    ) : (
-                      <div className="size-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-xs">{top3[1].name.charAt(0)}</div>
-                    )}
-                  </div>
-                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 rounded-full text-[10px] font-black bg-slate-600 text-white">#2</span>
-                </div>
-                <p className="text-xs font-bold mt-1.5 text-center">{top3[1].name}</p>
-                <p className="text-[10px] font-black text-sacred-brand">{top3[1].talents.toLocaleString('pt')} T</p>
-              </div>
-
-              {/* #1 Champion */}
-              <div className="flex flex-col items-center -translate-y-3">
-                <div className="relative">
-                  <div className="size-20 rounded-full border-4 border-gold-radiant overflow-hidden shadow-gold-glow animate-glow-pulse">
-                    <img src={top3[0].avatar!} alt={top3[0].name} className="size-full object-cover" />
-                  </div>
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 size-7 rounded-full bg-gold-radiant text-slate-950 flex items-center justify-center font-black text-xs shadow-gold-glow border-2 border-white dark:border-surface-dark">👑</span>
-                </div>
-                <p className="text-sm font-black mt-2 text-center">{top3[0].name}</p>
-                <p className="text-xs font-black text-gold-radiant">{top3[0].talents.toLocaleString('pt')} T</p>
-              </div>
-
-              {/* #3 */}
-              <div className="flex flex-col items-center">
-                <div className="relative">
-                  <div className="size-16 rounded-full border-2 border-amber-700/60 overflow-hidden">
-                    <img src={top3[2].avatar!} alt={top3[2].name} className="size-full object-cover" />
-                  </div>
-                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 rounded-full text-[10px] font-black bg-amber-800 text-white">#3</span>
-                </div>
-                <p className="text-xs font-bold mt-1.5 text-center">{top3[2].name}</p>
-                <p className="text-[10px] font-black text-sacred-brand">{top3[2].talents.toLocaleString('pt')} T</p>
-              </div>
+          loadingRanking ? (
+            <div className="py-16 text-center text-slate-400">
+              <span className="material-symbols-outlined text-3xl animate-spin mb-2">progress_activity</span>
+              <p className="text-xs font-medium">A carregar classificação da liga...</p>
             </div>
-
-            {/* Lista restante */}
-            <div className="space-y-2">
-              {rest.map((item) => (
-                <div
-                  key={item.rank}
-                  className="p-3 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 shadow-soft flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-5 text-center text-xs font-black text-slate-400">{item.rank}</span>
-                    {item.avatar ? (
-                      <img src={item.avatar} alt={item.name} className="size-10 rounded-full object-cover" />
-                    ) : (
-                      <div className="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-xs text-slate-600 dark:text-slate-300">
-                        {item.initials}
+          ) : ranking.length === 0 ? (
+            <div className="py-12 px-4 text-center space-y-3">
+              <div className="size-16 rounded-2xl bg-sacred-brand/10 dark:bg-sacred-neon/10 text-sacred-brand dark:text-sacred-neon mx-auto flex items-center justify-center">
+                <span className="material-symbols-outlined text-3xl">leaderboard</span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                Ainda sem pontuações nesta semana
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                Complete lições na Jornada bíblica para conquistar talentos e ser o primeiro a figurar no ranking semanal da sua liga!
+              </p>
+              <button
+                onClick={() => onNavigate('screen-game-dashboard')}
+                className="mt-2 btn-duo-primary dark:btn-duo-primary-dark text-xs py-3 px-6 font-bold shadow-duo-primary"
+              >
+                Começar Lição
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Pódio Top 3 Dinâmico */}
+              <div className="flex justify-center items-end gap-3 pt-4 pb-6">
+                {/* #2 (Se existir) */}
+                {ranking[1] && (
+                  <div className="flex flex-col items-center">
+                    <div className="relative">
+                      <div className="size-16 rounded-full border-2 border-slate-300 dark:border-slate-600 overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-xs text-slate-700 dark:text-slate-200">
+                        {ranking[1].avatarUrl ? (
+                          <img src={ranking[1].avatarUrl} alt={ranking[1].displayName} className="size-full object-cover" />
+                        ) : (
+                          ranking[1].displayName.charAt(0)
+                        )}
                       </div>
-                    )}
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{item.name}</h4>
-                      <p className="text-[10px] text-slate-400">{item.title}</p>
+                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 rounded-full text-[10px] font-black bg-slate-600 text-white">#2</span>
+                    </div>
+                    <p className="text-xs font-bold mt-1.5 text-center truncate max-w-[80px]">{ranking[1].displayName}</p>
+                    <p className="text-[10px] font-black text-sacred-brand dark:text-sacred-neon">{ranking[1].weeklyTalents.toLocaleString('pt')} T</p>
+                  </div>
+                )}
+
+                {/* #1 Champion */}
+                {ranking[0] && (
+                  <div className="flex flex-col items-center -translate-y-3">
+                    <div className="relative">
+                      <div className="size-20 rounded-full border-4 border-gold-radiant overflow-hidden shadow-gold-glow animate-glow-pulse bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-sm text-slate-800 dark:text-slate-100">
+                        {ranking[0].avatarUrl ? (
+                          <img src={ranking[0].avatarUrl} alt={ranking[0].displayName} className="size-full object-cover" />
+                        ) : (
+                          ranking[0].displayName.charAt(0)
+                        )}
+                      </div>
+                      <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 size-7 rounded-full bg-gold-radiant text-slate-950 flex items-center justify-center font-black text-xs shadow-gold-glow border-2 border-white dark:border-surface-dark">👑</span>
+                    </div>
+                    <p className="text-sm font-black mt-2 text-center truncate max-w-[100px]">{ranking[0].displayName}</p>
+                    <p className="text-xs font-black text-gold-radiant">{ranking[0].weeklyTalents.toLocaleString('pt')} T</p>
+                  </div>
+                )}
+
+                {/* #3 (Se existir) */}
+                {ranking[2] && (
+                  <div className="flex flex-col items-center">
+                    <div className="relative">
+                      <div className="size-16 rounded-full border-2 border-amber-700/60 overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-xs text-slate-700 dark:text-slate-200">
+                        {ranking[2].avatarUrl ? (
+                          <img src={ranking[2].avatarUrl} alt={ranking[2].displayName} className="size-full object-cover" />
+                        ) : (
+                          ranking[2].displayName.charAt(0)
+                        )}
+                      </div>
+                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 rounded-full text-[10px] font-black bg-amber-800 text-white">#3</span>
+                    </div>
+                    <p className="text-xs font-bold mt-1.5 text-center truncate max-w-[80px]">{ranking[2].displayName}</p>
+                    <p className="text-[10px] font-black text-sacred-brand dark:text-sacred-neon">{ranking[2].weeklyTalents.toLocaleString('pt')} T</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Lista restante (> #3) */}
+              <div className="space-y-2">
+                {ranking.slice(3).map((item) => (
+                  <div
+                    key={item.userId}
+                    className="p-3 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 shadow-soft flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-5 text-center text-xs font-black text-slate-400">{item.rank}</span>
+                      {item.avatarUrl ? (
+                        <img src={item.avatarUrl} alt={item.displayName} className="size-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-xs text-slate-600 dark:text-slate-300">
+                          {item.displayName.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{item.displayName}</h4>
+                        <p className="text-[10px] text-slate-400">Posição #{item.rank}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-black text-sacred-brand dark:text-sacred-neon block">{item.weeklyTalents.toLocaleString('pt')}</span>
+                      <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Talentos</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs font-black text-sacred-brand block">{item.talents.toLocaleString('pt')}</span>
-                    <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Talentos</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
+                ))}
+              </div>
+            </>
+          )
         ) : tab === 'friends' ? (
           /* ── Aba Amigos Bilaterais ── */
           <div className="space-y-2 pt-1">

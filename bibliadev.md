@@ -849,3 +849,43 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Removido `maximum-scale=1.0, user-scalable=no`, restaurando a capacidade de zoom nativo por pinça conforme as diretrizes WCAG 2.1 AA.
 - **Validação de Build:** `npm.cmd run build` aprovado com **Exit Code 0** (200 módulos transformados, zero erros de compilação).
 - **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 01:36 (Africa/Maputo).
+
+
+### 20/11/2026 — 07:40 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Execução Concluída do Plano de Dados Reais, Conta Opcional e Migração de Visitante (D0 a D5)
+- **Fase D0 (Inventário e Erradicação Definitiva de Mocks):**
+  - Removido o array estático `MOCK_RANKING` em `src/components/gamification/GameLeaderboard.tsx`.
+  - Integrada a chamada real à função `getLeagueRanking()` de `src/lib/gameSocialService.ts`.
+  - Implementados estados explícitos e honestos: carregamento com spinner, pódio dinâmico (apenas quando existem posições calculadas) e estado vazio convidativo (*"Ainda sem pontuações nesta semana. Complete lições na Jornada para entrar no ranking semanal da sua liga!"*).
+- **Fase D1 (Schema Supabase e Idempotência):**
+  - Criada a migração canónica `supabase/migrations/20261120000002_reading_userData_and_guest_migration.sql` contendo:
+    - `public.user_reading_progress` (posição de leitura, capítulo e versículo);
+    - `public.user_bookmarks` (favoritos com chave única por utilizador/livro/capítulo/versículo);
+    - `public.user_notes` (anotações e reflexões bíblicas);
+    - `public.user_highlights` (marca-texto colorido com chave única);
+    - `public.guest_migrations` (reivindicações de dispositivo com chave única `installation_id + user_id`);
+    - RPC transacional `migrate_guest_data` com execução protegida por `auth.uid()`, idempotência estrita e agregação segura.
+- **Fase D2 (Visitante Local e Migração de Progresso):**
+  - Criado `src/lib/guestMigrationService.ts` com gestão de `installation_id` estável gerado uma única vez por dispositivo.
+  - O resumo pré-migração `getLocalUserDataSummary()` inspeciona localmente favoritos, notas e tentativas de jogo para exibir ao utilizador antes da criação de conta.
+  - Implementada a função `performGuestMigration(userId)` que transfere dados locais para o Supabase e esvazia a fila offline via `gameSyncService`.
+- **Fase D3 (Autenticação sem Senha / OTP de 6 Dígitos e Google):**
+  - Reformulada a interface em `src/components/auth/AuthModal.tsx` com as opções aprovadas:
+    - Botão primário com um clique: **Continuar com Google** (`signInWithOAuth('google')`);
+    - Alternativa universal sem palavra-passe: **E-mail + Código OTP de 6 Dígitos** (`signInWithOtp` e `verifyOtp`);
+    - Tela de validação de OTP com máscara numérica, temporizador de reenvio de 60 segundos e troca de e-mail;
+    - Badge informativo de progresso protegido quando o visitante já possui conquistas no aparelho.
+- **Fase D4 (Offline-First e Sincronização):**
+  - A ativação de sessão em `AuthContext.tsx` dispara automaticamente a migração segura e descarrega a fila de tentativas de jogo pendentes sem duplicar XP ou talentos.
+- **Fase D5 (Convites e Partilha Nativa):**
+  - Atualizado `GameLeaderboard.tsx` para acionar `navigator.share` (Web Share API) nativo do smartphone (WhatsApp, Telegram, Messenger, SMS), com fallback gracioso para cópia na área de transferência.
+- **Validação de Build:** `npm.cmd run build` aprovado com **Exit Code 0** (201 módulos transformados, zero erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 07:40 (Africa/Maputo).
+
+
+### 20/11/2026 — 07:44 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Blindagem da Navbar no Tema Noturno e Prontidão de Deploy
+- **Correção da Navbar no Tema Noturno (`App.tsx` & `src/index.css`):**
+  - Identificada e solucionada a inconsistência em que a barra de navegação inferior podia herdar um fundo claro/branco quando sob certas regras de especificidade CSS de `.glass-surface`.
+  - Aplicadas classes nativas diretas do Tailwind: `bg-white/95 dark:bg-[#081413]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-[#1a3330]`.
+  - Atualizadas as regras de `.glass-surface` e `.glass-surface-dark` em `src/index.css` com regras explícitas para `.dark` e `[data-theme="dark"]`, garantindo obsidian escuro harmonioso em qualquer combinação de sistema operacional e tema selecionado.
+- **Validação de Build:** `npm.cmd run build` executado com sucesso e zero avisos bloqueantes (Exit Code 0).
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 07:44 (Africa/Maputo).
