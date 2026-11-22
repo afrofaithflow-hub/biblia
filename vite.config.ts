@@ -1,9 +1,87 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      filename: 'sw.js',
+      manifest: false, // Usamos public/manifest.json dedicado e validado
+      workbox: {
+        // App Shell: pré-cache dos scripts, folhas de estilo e ícones de produção
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
+        // Ignora imagens pesadas de mockups e protótipos de desenvolvimento
+        globIgnores: ['**/prototipos/**', '**/prototipos/*'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB para acomodar livros bíblicos em chunk
+        // ── Estratégias de runtime caching para offline-first ──
+        runtimeCaching: [
+          // Supabase API → Network First (com timeout curto para respostas instantâneas)
+          {
+            urlPattern: /^https:\/\/[a-z0-9]+\.supabase\.co\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'biblia-supabase-v1',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 10, // 10 minutos
+              },
+            },
+          },
+          // Google Fonts (Folhas de Estilo e Woff2) → Cache First
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'biblia-fonts-v1',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 ano
+              },
+            },
+          },
+          // CDNs de ícones e CSS externos → Cache First
+          {
+            urlPattern: /^https:\/\/cdnjs\.cloudflare\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'biblia-cdn-v1',
+              expiration: {
+                maxEntries: 15,
+                maxAgeSeconds: 60 * 60 * 24 * 90, // 90 dias
+              },
+            },
+          },
+          // Áudio e arquivos multimídia → StaleWhileRevalidate
+          {
+            urlPattern: /\.(mp3|ogg|wav)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'biblia-audio-v1',
+              expiration: {
+                maxEntries: 40,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
+              },
+            },
+          },
+        ],
+        // Fallback de navegação SPA para suporte offline total
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//, /^\/_/, /\/[^/?]+\.[^/]+$/],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
+    }),
+  ],
   resolve: {
     preserveSymlinks: true,
   },
@@ -23,6 +101,7 @@ export default defineConfig({
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'vendor-react';
           if (id.includes('node_modules/@supabase/')) return 'vendor-supabase';
           if (id.includes('node_modules/lucide-react')) return 'vendor-icons';
+          if (id.includes('node_modules/workbox-')) return 'vendor-workbox';
         },
       },
     },

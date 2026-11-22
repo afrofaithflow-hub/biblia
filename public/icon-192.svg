@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#15453f"/>
+      <stop offset="100%" stop-color="#081413"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Background rounded rect -->
+  <rect width="192" height="192" rx="40" fill="url(#bg)"/>
+  <!-- Glow -->
+  <ellipse cx="96" cy="80" rx="70" ry="60" fill="url(#glow)"/>
+  <!-- Book shape -->
+  <rect x="38" y="52" width="52" height="88" rx="6" fill="#1d5d55" stroke="#2dd4bf" stroke-width="1.5"/>
+  <rect x="102" y="52" width="52" height="88" rx="6" fill="#1d5d55" stroke="#2dd4bf" stroke-width="1.5"/>
+  <!-- Spine -->
+  <rect x="88" y="52" width="16" height="88" rx="4" fill="#2dd4bf" opacity="0.9"/>
+  <!-- Pages lines left -->
+  <line x1="50" y1="72" x2="82" y2="72" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="50" y1="84" x2="82" y2="84" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="50" y1="96" x2="82" y2="96" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="50" y1="108" x2="82" y2="108" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="50" y1="120" x2="82" y2="120" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <!-- Pages lines right -->
+  <line x1="110" y1="72" x2="142" y2="72" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="110" y1="84" x2="142" y2="84" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="110" y1="96" x2="142" y2="96" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="110" y1="108" x2="142" y2="108" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="110" y1="120" x2="142" y2="120" stroke="#2dd4bf" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <!-- Star / AI sparkle -->
+  <g transform="translate(96,42)">
+    <circle cx="0" cy="0" r="6" fill="#2dd4bf" opacity="0.95"/>
+    <line x1="0" y1="-10" x2="0" y2="10" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"/>
+    <line x1="-10" y1="0" x2="10" y2="0" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <!-- "AI" small text at bottom -->
+  <text x="96" y="162" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="18" fill="#2dd4bf" letter-spacing="3">BiblIA</text>
+</svg>

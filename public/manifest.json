@@ -1,0 +1,67 @@
+{
+  "id": "/",
+  "name": "BiblIA — A Palavra Viva",
+  "short_name": "BiblIA",
+  "description": "Leitura bíblica com IA, gamificação espiritual, narração por voz e estudo offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#081413",
+  "theme_color": "#081413",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["education", "lifestyle", "books"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Continuar Leitura",
+      "short_name": "Leitura",
+      "url": "/?screen=screen-biblia",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Jornada Bíblica",
+      "short_name": "Jornada",
+      "url": "/?screen=screen-game-dashboard",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Ouvir a Palavra",
+      "short_name": "Áudio",
+      "url": "/?screen=screen-audio",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

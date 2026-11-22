@@ -889,3 +889,28 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Atualizadas as regras de `.glass-surface` e `.glass-surface-dark` em `src/index.css` com regras explícitas para `.dark` e `[data-theme="dark"]`, garantindo obsidian escuro harmonioso em qualquer combinação de sistema operacional e tema selecionado.
 - **Validação de Build:** `npm.cmd run build` executado com sucesso e zero avisos bloqueantes (Exit Code 0).
 - **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 07:44 (Africa/Maputo).
+
+
+
+### 20/11/2026 — 19:45 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Transformação PWA Completa (Offline-First, Manifest & Instalação Nativa)
+- **Manifesto Web Canónico (`public/manifest.json`):**
+  - Configurado com `id: "/"`, `scope: "/"`, `start_url: "/"`, `display: "standalone"`, `orientation: "portrait-primary"`, tema `#081413` e cores do ecossistema BiblIA.
+  - Ícones gerados em PNG e SVG para todas as densidades: `pwa-192x192.png`, `pwa-512x512.png`, `maskable-icon.svg`, `icon-192.svg`, `icon-512.svg` e `apple-touch-icon.png` (180x180 para iOS).
+  - Atalhos nativos de sistema configurados para "Continuar Leitura", "Jornada Bíblica" e "Ouvir a Palavra".
+- **Service Worker Inteligente e Cache Workbox (`vite.config.ts` via `vite-plugin-pwa`):**
+  - Implementado `vite-plugin-pwa` com Workbox no modo `generateSW`.
+  - Pré-cache otimizado com exclusão de imagens de protótipos de desenvolvimento (`globIgnores: ['**/prototipos/**']`), encolhendo o download inicial de 14.1 MiB para 4.8 MiB.
+  - Estratégias de runtime caching dedicadas:
+    - Supabase API: `NetworkFirst` com fallback de cache em até 5 segundos.
+    - Google Fonts & CDNs de ícones: `CacheFirst` de longa duração (até 1 ano).
+    - Áudios e multimídia: `StaleWhileRevalidate`.
+    - Navegação SPA: `navigateFallback: '/index.html'`.
+- **Banner de Instalação Não Intrusivo (`PWAInstallBanner.tsx`):**
+  - Captura do evento `beforeinstallprompt` com prompt personalizado, botão de "Instalar" e opção "Agora não" persistida em `localStorage`.
+  - Detecção de modo `standalone` ativo para supressão automática quando a app já estiver instalada no ecrã inicial.
+- **Headers de Cache no CDN (`vercel.json`):**
+  - Configurado `max-age=0, must-revalidate` para `/sw.js` e `/manifest.json`, garantindo propagação imediata de novos deploys sem bloqueio por cache estático do CDN.
+- **Suporte a Atalhos de URL (`App.tsx`):**
+  - Inicialização de estado reativo respeitando o parâmetro de query `?screen=...` dos atalhos da PWA.
+- **Validação de Build:** `npm.cmd run build` executado com **Exit Code 0** (202 módulos, PWA v2.0.0 com 78 entries pré-cacheadas).
+- **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 19:45 (Africa/Maputo).

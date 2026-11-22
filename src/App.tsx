@@ -25,6 +25,7 @@ import { PricingModal } from './components/pricing/PricingModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { Toast } from './components/shared/Toast';
 import { WebhookSimulatorDrawer } from './components/sandbox/WebhookSimulatorDrawer';
+import PWAInstallBanner from './components/pwa/PWAInstallBanner';
 
 /** Tab-level screens — sub-screens belong to their parent tab */
 const GAME_SUB_SCREENS = new Set([
@@ -146,10 +147,18 @@ const NavTab: React.FC<NavTabProps> = ({ icon, label, active, color = 'teal', ba
 };
 
 const AppContent: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState('screen-home');
+  // Inicializa respeitando atalhos da PWA (ex: /?screen=screen-biblia)
+  const [currentScreen, setCurrentScreen] = useState<string>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const requestedScreen = params.get('screen');
+      if (requestedScreen) return requestedScreen;
+    } catch {}
+    return 'screen-home';
+  });
   const [prevScreen, setPrevScreen] = useState('screen-home');
   const [toast, setToast] = useState<{ message: string; icon?: string } | null>(null);
-  const screenRef = useRef<string>('screen-home');
+  const screenRef = useRef<string>(currentScreen);
 
   const { isPricingModalOpen, closePricingModal } = useSubscription();
   const { isPlaying } = useAudio();
@@ -396,6 +405,9 @@ const AppContent: React.FC = () => {
 
         {/* Sandbox Webhook Simulator (Apenas Ambiente DEV) */}
         {import.meta.env.DEV && <WebhookSimulatorDrawer />}
+
+        {/* PWA Install Banner */}
+        <PWAInstallBanner showToast={showToast} />
 
       </div>
   );

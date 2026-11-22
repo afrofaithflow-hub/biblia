@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full bleed safe zone background (maskable: content in central 80%) -->
+  <rect width="512" height="512" fill="#081413"/>
+  <defs>
+    <radialGradient id="bg2" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#15453f"/>
+      <stop offset="100%" stop-color="#081413"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg2)"/>
+  <!-- Book left (centered within 80% safe zone = 51..461) -->
+  <rect x="116" y="156" width="120" height="200" rx="12" fill="#1d5d55" stroke="#2dd4bf" stroke-width="2.5"/>
+  <rect x="276" y="156" width="120" height="200" rx="12" fill="#1d5d55" stroke="#2dd4bf" stroke-width="2.5"/>
+  <rect x="236" y="156" width="40" height="200" rx="8" fill="#2dd4bf" opacity="0.9"/>
+  <line x1="130" y1="200" x2="228" y2="200" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" opacity="0.65"/>
+  <line x1="130" y1="225" x2="228" y2="225" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" opacity="0.65"/>
+  <line x1="130" y1="250" x2="228" y2="250" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <line x1="130" y1="275" x2="228" y2="275" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+  <line x1="284" y1="200" x2="382" y2="200" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" opacity="0.65"/>
+  <line x1="284" y1="225" x2="382" y2="225" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" opacity="0.65"/>
+  <line x1="284" y1="250" x2="382" y2="250" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+  <line x1="284" y1="275" x2="382" y2="275" stroke="#2dd4bf" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+  <g transform="translate(256,128)">
+    <circle cx="0" cy="0" r="14" fill="#2dd4bf"/>
+    <line x1="0" y1="-22" x2="0" y2="22" stroke="#2dd4bf" stroke-width="4" stroke-linecap="round"/>
+    <line x1="-22" y1="0" x2="22" y2="0" stroke="#2dd4bf" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="256" y="400" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="44" fill="#2dd4bf" letter-spacing="5">BiblIA</text>
+</svg>
