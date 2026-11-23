@@ -65,13 +65,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({ isOpen, onClose, sho
         {/* Header */}
         <div className="text-center pt-2 pb-4">
           <span className="inline-block px-3 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wider mb-2">
-            BiblIA — PRD v2.1
+            Apoie a Missão BiblIA
           </span>
           <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
             Escolha o Seu Plano
           </h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">
-            Leitura ilimitada 100% gratuita para todos. Atualize para desbloquear áudio imersivo e sem anúncios.
+            Leitura bíblica 100% gratuita para sempre. Apoie o desenvolvimento e desbloqueie jornadas avançadas.
           </p>
         </div>
 

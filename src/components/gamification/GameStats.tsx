@@ -1,5 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import { getDailyProgress, getReviewQueue, getUserProgressTracks, requestGameMode } from '../../lib/gameSession';
+import {
+  getDailyProgress,
+  getRecentPracticeDates,
+  getReviewQueue,
+  getUserProgressTracks,
+  requestGameMode,
+} from '../../lib/gameSession';
 
 interface GameStatsProps {
   onNavigate: (screen: string) => void;
@@ -179,6 +185,14 @@ export const GameStats: React.FC<GameStatsProps> = ({ onNavigate, showToast }) =
             <p className="text-xs text-slate-400 leading-relaxed">
               Domínio mede a compreensão e retenção real de cada tema — não apenas respostas certas imediatas. A 3ª estrela exige revisão após 3 dias.
             </p>
+            {topicEntries.length === 0 && (
+              <div className="text-center py-12 px-4 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200/70 dark:border-white/10">
+                <span className="material-symbols-outlined text-4xl text-sacred-brand/40 block mb-2">stars</span>
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                  Complete a sua primeira lição para medir o domínio por tema bíblico.
+                </p>
+              </div>
+            )}
             {topicEntries.map(([topic, pct]) => (
               <div key={topic} className="p-3.5 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 shadow-soft space-y-2">
                 <div className="flex items-center justify-between">
@@ -217,13 +231,14 @@ export const GameStats: React.FC<GameStatsProps> = ({ onNavigate, showToast }) =
                   </p>
                   <button
                     onClick={() => {
-                      showToast(`Iniciando revisão de ${Math.min(3, dueReviews.length)} passagens`, 'history_edu');
-                      requestGameMode('true-false');
+                      const count = Math.min(5, dueReviews.length);
+                      showToast(`Iniciando revisão espaçada de ${count} passagem${count > 1 ? 'ns' : ''}`, 'history_edu');
+                      requestGameMode('review');
                       onNavigate('screen-jogo-licao');
                     }}
                     className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold"
                   >
-                    Revisar {Math.min(3, dueReviews.length)} agora →
+                    Revisar {Math.min(5, dueReviews.length)} agora →
                   </button>
                 </div>
 
@@ -276,20 +291,21 @@ export const GameStats: React.FC<GameStatsProps> = ({ onNavigate, showToast }) =
           <div className="space-y-3 max-w-sm mx-auto w-full pt-2">
             <p className="text-xs text-slate-400">Apenas visível para si. Ajuste a privacidade nas definições.</p>
 
-            {/* Calendário de Sequência */}
+            {/* Calendário de Sequência (dados reais em Africa/Maputo) */}
             <div className="p-4 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 shadow-soft">
-              <p className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mb-3">Dias de prática este mês</p>
+              <p className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mb-3">Últimos 28 dias de prática</p>
               <div className="grid grid-cols-7 gap-1">
-                {Array.from({ length: 28 }, (_, i) => {
-                  const hasActivity = i % 3 !== 2;
-                  return (
-                    <div
-                      key={i}
-                      className={`aspect-square rounded-md ${hasActivity ? 'bg-sacred-brand' : 'bg-slate-100 dark:bg-slate-800'}`}
-                      title={`Dia ${i + 1}`}
-                    />
-                  );
-                })}
+                {getRecentPracticeDates(28).map((day) => (
+                  <div
+                    key={day.dateKey}
+                    className={`aspect-square rounded-md ${
+                      day.active
+                        ? 'bg-sacred-brand dark:bg-sacred-neon'
+                        : 'bg-slate-100 dark:bg-slate-800'
+                    } ${day.isToday ? 'ring-2 ring-amber-400' : ''}`}
+                    title={`${day.label}${day.active ? ' — Prática confirmada' : ' — Sem atividade'}`}
+                  />
+                ))}
               </div>
               <div className="flex items-center gap-2 mt-3">
                 <div className="size-3 rounded-sm bg-sacred-brand" />

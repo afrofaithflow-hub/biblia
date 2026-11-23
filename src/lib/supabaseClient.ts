@@ -26,7 +26,7 @@ export const supabase: SupabaseClient = createClient(clientUrl, clientKey, {
 
 if (!isSupabaseConfigured) {
   console.info(
-    '%c[BiblIA Supabase]%c Operando em Modo Sandbox Local (Offline-first). Para conectar ao seu banco real, defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env.',
+    '%c[BiblIA Supabase]%c Modo local offline ativo (sem credenciais de nuvem configuradas).',
     'color: #2d7a7c; font-weight: bold;',
     'color: inherit;'
   );

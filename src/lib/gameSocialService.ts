@@ -6,6 +6,7 @@
 
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import type { SocialFriend } from '../types/gameContracts';
+import type { ChurchGroup } from '../types/biblia';
 
 export interface LeagueEntry {
   rank: number;
@@ -102,7 +103,7 @@ export async function generateInviteCode(): Promise<{ code: string; shareUrl: st
 
   return {
     code: data.invite_code,
-    shareUrl: data.share_url || `${window.location.origin}/convite/${data.invite_code}`,
+    shareUrl: `${window.location.origin}/?invite=${encodeURIComponent(data.invite_code)}`,
   };
 }
 
@@ -116,7 +117,98 @@ export async function acceptInviteCode(code: string): Promise<{ success: boolean
   const { data, error } = await supabase.rpc('accept_friend_invite', { p_code: cleanCode });
   if (error) return { success: false, message: error.message };
   if (data?.status === 'error') return { success: false, message: data.message || 'Código inválido.' };
-  return { success: true, message: data?.message || 'Amizade adicionada com sucesso.' };
+  return { success: true, message: data?.message || 'Amizade adicionada com sucesso!' };
+}
+
+export async function getMyChurchGroups(): Promise<ChurchGroup[]> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return [];
+
+  const { data: memberships, error } = await supabase
+    .from('church_group_members')
+    .select(`
+      role,
+      group:church_groups(
+        id,
+        name,
+        group_code,
+        motto,
+        leader_id,
+        weekly_goal_xp,
+        current_weekly_xp,
+        created_at
+      )
+    `)
+    .eq('user_id', userId);
+
+  if (error || !memberships) {
+    console.warn('[gameSocialService] Falha ao carregar grupos:', error?.message);
+    return [];
+  }
+
+  const validGroups = memberships
+    .map((m: any) => ({ role: m.role, group: m.group }))
+    .filter((item) => Boolean(item.group?.id));
+
+  if (validGroups.length === 0) return [];
+
+  const groupIds = validGroups.map((item) => item.group.id);
+  const countMap = new Map<string, number>();
+
+  const { data: allMembers } = await supabase
+    .from('church_group_members')
+    .select('group_id')
+    .in('group_id', groupIds);
+
+  if (allMembers) {
+    for (const row of allMembers) {
+      countMap.set(row.group_id, (countMap.get(row.group_id) || 0) + 1);
+    }
+  }
+
+  return validGroups.map(({ role, group }) => ({
+    id: group.id,
+    name: group.name,
+    group_code: group.group_code,
+    motto: group.motto || 'Crescendo juntos na Palavra',
+    leader_id: group.leader_id,
+    weekly_goal_xp: Number(group.weekly_goal_xp || 1500),
+    current_weekly_xp: Number(group.current_weekly_xp || 0),
+    member_count: countMap.get(group.id) || 1,
+    my_role: role === 'leader' || role === 'admin' ? role : 'member',
+    created_at: group.created_at,
+  }));
+}
+
+export async function createChurchGroup(
+  name: string,
+  motto?: string
+): Promise<{ success: boolean; message: string; groupCode?: string }> {
+  const cleanName = name.trim();
+  if (cleanName.length < 3) {
+    return { success: false, message: 'O nome do grupo deve ter pelo menos 3 caracteres.' };
+  }
+  if (!await getAuthenticatedUserId()) {
+    return { success: false, message: 'Entre numa conta para criar um grupo.' };
+  }
+
+  const { data, error } = await supabase.rpc('create_church_group', {
+    p_name: cleanName,
+    p_motto: motto?.trim() || 'Crescendo juntos na Palavra',
+  });
+
+  if (error) {
+    return { success: false, message: 'Não foi possível criar o grupo agora.' };
+  }
+  if (data?.status === 'error') {
+    return { success: false, message: data.message || 'Erro ao criar grupo.' };
+  }
+
+  return {
+    success: true,
+    message: data?.message || 'Grupo criado com sucesso!',
+    groupCode: data?.group_code,
+  };
 }
 
 export async function joinChurchGroupByCode(code: string): Promise<{ success: boolean; message: string }> {
@@ -129,7 +221,18 @@ export async function joinChurchGroupByCode(code: string): Promise<{ success: bo
   const { data, error } = await supabase.rpc('join_church_group_by_code', { p_code: cleanCode });
   if (error) return { success: false, message: error.message };
   if (data?.status === 'error') return { success: false, message: data.message || 'Código inválido.' };
-  return { success: true, message: data?.message || 'Entrou no grupo com sucesso.' };
+  return { success: true, message: data?.message || 'Entrou no grupo com sucesso!' };
+}
+
+export async function leaveChurchGroup(groupId: string): Promise<{ success: boolean; message: string }> {
+  if (!await getAuthenticatedUserId()) {
+    return { success: false, message: 'Entre numa conta para gerir grupos.' };
+  }
+
+  const { data, error } = await supabase.rpc('leave_church_group', { p_group_id: groupId });
+  if (error) return { success: false, message: error.message };
+  if (data?.status === 'error') return { success: false, message: data.message || 'Erro ao sair do grupo.' };
+  return { success: true, message: data?.message || 'Saiu do grupo.' };
 }
 
 export async function blockUser(targetUserId: string): Promise<{ success: boolean; message: string }> {

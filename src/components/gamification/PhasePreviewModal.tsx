@@ -16,7 +16,7 @@ interface PhasePreviewModalProps {
     summary: string;
     tags: string[];
     nextPhase: string;
-    coverImg: string;
+    coverImg?: string;
   };
 }
 
@@ -25,19 +25,17 @@ export const PhasePreviewModal: React.FC<PhasePreviewModalProps> = ({
   onClose,
   onStart,
   phaseData = {
-    title: 'Gênesis: O Início',
+    title: 'O Princípio e a Luz',
     testament: 'Antigo Testamento',
-    level: 3,
-    xpReward: 50,
-    difficulty: 'Média',
-    duration: '5 min',
+    level: 1,
+    xpReward: 30,
+    difficulty: 'Fácil',
+    duration: '3 min',
     heartsRequired: 1,
     summary:
-      'Explore a história da criação e descubra como a luz foi separada das trevas. Neste desafio, você ordenará os dias da criação e responderá perguntas sobre os primeiros humanos.',
-    tags: ['Ordem da Criação', 'Personagens Chave'],
-    nextPhase: 'Fase 2: A Queda',
-    coverImg:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBgjB5pPbuRAphaPOmslTiu1FP0-DvVV5RRXGO1UXHAasnUeeYbrK9q6qdiAnbApNHW0m9jAruYPCzNfZDBVwv7CSEJdnRjyi96XtjMlHso7ghyKQXtY-0sg1IBNQSI6ijKieQIL3MaIxjDQuYowhTs6Ieb5jtBKxAJM44pNrjv8DqLpeaNQQ_GXeL5ggTBQDP8ylGOuMBzyzBprI0deBdsYNfMIu9p7wIacjWK0ZmF3g6jlIX5To7dphUcVPvhrEJbZYzoOySDKAc',
+      'No princípio, criou Deus os céus e a terra. Descubra a ordem e o propósito dos primeiros dias da criação.',
+    tags: ['Criação', 'Luz'],
+    nextPhase: 'Próxima Fase',
   },
 }) => {
   // Prevent background scroll while modal is open
@@ -93,11 +91,19 @@ export const PhasePreviewModal: React.FC<PhasePreviewModalProps> = ({
         {/* Scrollable content with min-h-0 to guarantee scrollability on low-height viewports */}
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 sm:px-6 pb-4 space-y-4">
           {/* Cover card with responsive height */}
-          <div className="relative w-full h-40 sm:h-48 rounded-2xl overflow-hidden shadow-md group mt-1 shrink-0">
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-              style={{ backgroundImage: `url('${phaseData.coverImg}')` }}
-            />
+          <div className="relative w-full h-40 sm:h-48 rounded-2xl overflow-hidden shadow-md group mt-1 shrink-0 bg-gradient-to-br from-sacred-deep via-sacred-brand to-amber-700/80">
+            {phaseData.coverImg ? (
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                style={{ backgroundImage: `url('${phaseData.coverImg}')` }}
+              />
+            ) : (
+              <div className="absolute right-4 top-4 opacity-20 pointer-events-none">
+                <span className="material-symbols-outlined text-[96px] text-amber-200" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  auto_stories
+                </span>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
             <div className="absolute top-3 right-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2.5 py-0.5 rounded-lg shadow-sm flex items-center gap-1.5 border border-white/20">

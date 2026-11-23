@@ -25,13 +25,13 @@ export const RewardModal: React.FC<RewardModalProps> = ({
   const latestResult = getLatestGameResult();
   const tracks = getUserProgressTracks();
 
-  // Valores reais da sessão ou fallback seguro
-  const xpEarned = propXp ?? latestResult?.xpEarned ?? 40;
-  const talentsEarned = propTalents ?? latestResult?.talentsEarned ?? 10;
+  // Valores reais da sessão ou fallback zero
+  const xpEarned = propXp ?? latestResult?.xpEarned ?? 0;
+  const talentsEarned = propTalents ?? latestResult?.talentsEarned ?? 0;
   const starsEarned = latestResult?.starsEarned ?? 0;
   const currentLevel = propLevel ?? `Nível ${tracks.walkLevel}`;
   const nextLevel = propNextLevel ?? `Nível ${tracks.walkLevel + 1}`;
-  const xpNeeded = propXpNeeded ?? Math.max(0, tracks.walkLevel * 200 - tracks.lifetimeXp);
+  const xpNeeded = propXpNeeded ?? Math.max(0, tracks.walkLevel * 250 - tracks.lifetimeXp);
   const quote = propQuote ?? 'Muito bem! Cada passo na Palavra ilumina a tua caminhada.';
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({
             <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/10">
               <div
                 className="h-full bg-gradient-to-r from-gold-talent to-gold-radiant rounded-full shadow-[0_0_12px_rgba(245,158,11,0.6)]"
-                style={{ width: `${Math.min(100, Math.round(((tracks.lifetimeXp % 200) / 200) * 100))}%` }}
+                style={{ width: `${Math.min(100, Math.round(((tracks.lifetimeXp % 250) / 250) * 100))}%` }}
               />
             </div>
 

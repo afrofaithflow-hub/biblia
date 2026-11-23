@@ -94,6 +94,26 @@ export function getWorldCompletion(worldId: number): number {
   return Math.round((phases.filter((phase) => phase.isCompleted).length / phases.length) * 100);
 }
 
+export function getTotalMasteryStars(): number {
+  const state = getJourneyState();
+  return Object.values(state.phases).reduce((sum, phase) => sum + (phase.stars || 0), 0);
+}
+
+export function awardThirdMasteryStar(phaseId: string): boolean {
+  if (!phaseId) return false;
+  const state = getJourneyState();
+  const phase = state.phases[phaseId];
+  if (!phase || !phase.isCompleted || phase.stars >= 3) return false;
+
+  state.phases[phaseId] = {
+    ...phase,
+    stars: 3,
+    retentionReviewedAt: new Date().toISOString(),
+  };
+  saveJourneyState(state);
+  return true;
+}
+
 export function recordPhaseResult(phaseId: string | undefined, result: { completed: boolean; starsEarned: number }): void {
   if (!phaseId || !result.completed) return;
 

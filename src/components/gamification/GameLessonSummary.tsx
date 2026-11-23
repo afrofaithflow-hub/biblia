@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
-import { getLatestGameResult, getReviewQueue, getUserProgressTracks } from '../../lib/gameSession';
+import {
+  getDailyProgress,
+  getLatestGameResult,
+  getReviewQueue,
+  getUserProgressTracks,
+  requestGameMode,
+} from '../../lib/gameSession';
 import { Confetti } from '../shared/Confetti';
 import { gameSfx } from '../../lib/gameSoundEffects';
 
@@ -13,6 +19,8 @@ const STAR_COLORS = ['text-slate-300', 'text-amber-400', 'text-amber-400'];
 export const GameLessonSummary: React.FC<GameLessonSummaryProps> = ({ onNavigate }) => {
   const result = getLatestGameResult();
   const tracks = getUserProgressTracks();
+  const dailyProgress = getDailyProgress();
+  const streakCount = Math.max(tracks.streakDays, dailyProgress.currentStreak);
   const reviewQueue = getReviewQueue();
   const reviewDueCount = useMemo(() => {
     const now = new Date();
@@ -49,7 +57,7 @@ export const GameLessonSummary: React.FC<GameLessonSummaryProps> = ({ onNavigate
           <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
             local_fire_department
           </span>
-          <span>{tracks.streakDays} Dias</span>
+          <span>{streakCount} {streakCount === 1 ? 'Dia' : 'Dias'}</span>
         </div>
       </header>
 
@@ -170,7 +178,10 @@ export const GameLessonSummary: React.FC<GameLessonSummaryProps> = ({ onNavigate
           {/* Revisar Passagens */}
           {reviewDueCount > 0 && (
             <button
-              onClick={() => onNavigate('screen-estatisticas')}
+              onClick={() => {
+                requestGameMode('review');
+                onNavigate('screen-jogo-licao');
+              }}
               className="py-3 px-3 rounded-xl bg-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-1 shadow-sm"
             >
               <span className="material-symbols-outlined text-[15px]">history_edu</span>

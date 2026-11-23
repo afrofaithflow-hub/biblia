@@ -784,9 +784,9 @@ class AudioEngine {
           album: `${getBibleTranslationLabel(this.chapterData.translation)} • ${this.chapterData.subtitle}`,
           artwork: [
             {
-              src: 'https://images.unsplash.com/photo-1509021436665-8f07dbf5bf1d?auto=format&fit=crop&w=512&q=80',
+              src: `${window.location.origin}/pwa-512x512.png`,
               sizes: '512x512',
-              type: 'image/jpeg',
+              type: 'image/png',
             },
           ],
         });

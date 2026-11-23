@@ -21,6 +21,9 @@ import {
   startPlan,
 } from '../../lib/readingPlanStorage';
 import { saveLastRead } from '../../lib/bibleStorage';
+import { findBibleBookByName, queueBibleReference } from '../../lib/scriptureReference';
+import { getUserProgressTracks } from '../../lib/gameSession';
+import { useAuth } from '../../context/AuthContext';
 import { useSubscription } from '../../context/SubscriptionContext';
 import { PlanDetailModal } from './PlanDetailModal';
 
@@ -35,7 +38,15 @@ export const ReadingPlans: React.FC<ReadingPlansProps> = ({ onNavigate, showToas
   const [plansProgress, setPlansProgress] = useState(getAllPlansProgress());
   const [selectedPlanForModal, setSelectedPlanForModal] = useState<ReadingPlan | null>(null);
 
+  const { user } = useAuth();
   const { currentPlan, openPricingModal } = useSubscription();
+  const tracks = getUserProgressTracks();
+  const userInitial = String(
+    user?.user_metadata?.display_name || user?.email || 'B'
+  )
+    .trim()
+    .charAt(0)
+    .toUpperCase();
 
   // Carrega estado de progresso e plano ativo
   const refreshState = () => {
@@ -62,9 +73,10 @@ export const ReadingPlans: React.FC<ReadingPlansProps> = ({ onNavigate, showToas
 
   // Navega para o leitor bíblico abrindo exatamente no livro/capítulo indicado
   const handleNavigateToBible = (bookId: string, chapter: number, verseStart?: number) => {
-    // Converte bookId em nome compatível (ex: "marcos" -> "Marcos", "salmos" -> "Salmos")
-    const formattedBook = bookId.charAt(0).toUpperCase() + bookId.slice(1);
-    saveLastRead(formattedBook, chapter, verseStart || 1, 'blivre');
+    const resolvedBook = findBibleBookByName(bookId)?.name || bookId;
+    const verse = verseStart || 1;
+    saveLastRead(resolvedBook, chapter, verse, 'blivre');
+    queueBibleReference(`${resolvedBook} ${chapter}:${verse}`);
     onNavigate('screen-biblia');
   };
 
@@ -83,13 +95,13 @@ export const ReadingPlans: React.FC<ReadingPlansProps> = ({ onNavigate, showToas
             <div className="relative">
               <div
                 onClick={() => onNavigate('screen-perfil')}
-                className="bg-center bg-cover rounded-full size-10 border-2 border-white dark:border-sacred-neon shadow-sm cursor-pointer"
-                style={{
-                  backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAaVeHcTvFPhdveIuw5jZrBUOxM8d-MkBA9z2MeuyrwsOSfrVkHfKd3BH1W4yeYz0gkW-NSic692jmil-YPxUJpO6tLmgHX8ICnEv5sS4INAsqMLiC5-RuRmPzJ3PuKan431xKxM4j7gbFfy8tbmOVX355K5K63ucQ_PyY7AXmvBuT9p0YWPaaLssycw5lcw9WmVA2GVv_znrhgLL1Z4I5dFwp3wCiW3FSo4QFObpNnFvbiF1_Q0OcBlMj1GdV9L5PFgDcOLlh96uI')`,
-                }}
-              />
+                className="rounded-full size-10 border-2 border-white dark:border-sacred-neon bg-sacred-brand/15 dark:bg-sacred-neon/15 text-sacred-brand dark:text-sacred-neon flex items-center justify-center font-black text-sm shadow-sm cursor-pointer"
+                title="Ver Perfil"
+              >
+                {user ? userInitial : <span className="material-symbols-outlined text-lg">person</span>}
+              </div>
               <div className="absolute -bottom-1 -right-1 bg-sacred-brand text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full border border-white dark:border-slate-900">
-                Lvl 3
+                Nv {tracks.walkLevel}
               </div>
             </div>
             <div className="text-left">
@@ -342,7 +354,7 @@ export const ReadingPlans: React.FC<ReadingPlansProps> = ({ onNavigate, showToas
               </div>
             </div>
 
-            {/* SEÇÃO 3: BANNER APOIADOR MISSIONÁRIO (PROTÓTIPO 2.1) */}
+            {/* SEÇÃO 3: BANNER APOIADOR MISSIONÁRIO */}
             <div className="rounded-3xl bg-[#fdf6f2] dark:bg-[#2c201c] p-5 border border-terracotta/25 relative overflow-hidden">
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="material-symbols-outlined text-terracotta text-xl">

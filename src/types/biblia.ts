@@ -1,5 +1,5 @@
 // ==============================================================================
-// BiblIA — PRD Final v2.1 Types
+// BiblIA — Tipos Canônicos de Membresia e Comunidade
 // ==============================================================================
 
 export type PlanTier = 0 | 1 | 2; // 0=FREE, 1=PREMIUM, 2=MASTER
@@ -18,7 +18,7 @@ export interface Subscription {
   id: string;
   user_id: string;
   external_subscription_id: string;
-  provider: 'sandbox' | 'stripe' | 'lemonsqueezy';
+  provider: 'stripe' | 'lemonsqueezy';
   plan_tier: 1 | 2;
   status: SubscriptionStatus;
   current_period_start: string;
@@ -58,51 +58,16 @@ export interface PlanPricing {
   isRecommended?: boolean;
 }
 
-export interface AudioCatalogItem {
-  id: string;
-  cache_key: string;
-  book: string;
-  chapter: number;
-  language: string;
-  translation: string;
-  voice_id: string;
-  ambient_id: string;
-  storage_path: string;
-  duration_seconds: number;
-  file_size_bytes: number;
-  tts_provider: string;
-  generation_cost_usd: number;
-  play_count: number;
-  status: 'generating' | 'ready' | 'failed';
-  created_at: string;
-}
-
-export interface DownloadQuotaResult {
-  allowed: boolean;
-  tier: PlanTier;
-  remaining_today: number;
-  unlimited?: boolean;
-  already_downloaded_today?: boolean;
-  reason?: 'requires_premium_or_master' | 'daily_limit_reached' | 'user_not_found';
-}
-
-export interface Clan {
+export interface ChurchGroup {
   id: string;
   name: string;
-  description: string;
+  group_code: string;
+  motto: string;
   leader_id: string;
-  leader_name: string;
+  weekly_goal_xp: number;
+  current_weekly_xp: number;
   member_count: number;
-  badge_url: string;
+  my_role: 'leader' | 'admin' | 'member';
   created_at: string;
 }
 
-export interface WebhookEventLog {
-  id: string;
-  event_id: string;
-  provider: string;
-  event_type: string;
-  status_result: SubscriptionStatus;
-  timestamp: string;
-  payload: Record<string, unknown>;
-}

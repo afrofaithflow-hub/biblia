@@ -157,12 +157,13 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
             onClick={() => onNavigate('screen-mapa-mundos')}
             className="relative w-full aspect-[16/7] rounded-2xl overflow-hidden shadow-lg shadow-sacred-brand/10 group cursor-pointer transition-transform hover:scale-[1.01] duration-300"
           >
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-              style={{
-                backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCpIGpIH8cE3hncvCzqMEsOSltzFsWmD7IHQaOyhiSyqwLZxQNY-IfkP7fAijVS0CnpLn12fBXrXQVcfCXekN5l9K4Ooap_gwyc6W42PKfikTgz1AeyUdJfCacF815L3ek_SRWLNjsza-B_5tQxJlvgMI0uY_3OxBV4pSOg2b7obq7BsFHLlzFD9LOkcAmjO2oxhTsSUcCjiciMnJ0J0Yy5c7GrnC5kPDs7DzIONwkPXUQrGKGjUKyALTqrbo5OQy4fnrHX7XzQCSg')`,
-              }}
-            />
+            <div className="absolute inset-0 bg-gradient-to-br from-sacred-deep via-sacred-brand to-amber-700/80 transition-transform duration-700 group-hover:scale-105">
+              <div className="absolute right-4 top-3 opacity-20 pointer-events-none">
+                <span className="material-symbols-outlined text-[88px] text-amber-200" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  {currentWorld.icon}
+                </span>
+              </div>
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-sacred-deep/95 via-sacred-deep/40 to-transparent" />
 
             <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">

@@ -1,6 +1,8 @@
 import React from 'react';
 import { CANONICAL_WORLDS } from '../../data/canonicalGameData';
 import { getUserProgressTracks } from '../../lib/gameSession';
+import { getJourneyPhases, getWorldCompletion } from '../../lib/gameJourney';
+import { useAudio } from '../../context/AudioContext';
 
 interface WorldMapProps {
   onNavigate: (screen: string) => void;
@@ -9,6 +11,7 @@ interface WorldMapProps {
 
 export const WorldMap: React.FC<WorldMapProps> = ({ onNavigate, showToast }) => {
   const tracks = getUserProgressTracks();
+  const { isPlaying } = useAudio();
 
   const handleWorldClick = (worldId: number, isUnlocked: boolean) => {
     if (!isUnlocked) {
@@ -40,7 +43,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({ onNavigate, showToast }) => 
             Sua Jornada
           </h1>
           <button
-            onClick={() => showToast('Complete os mundos para avançar na fé.', 'help')}
+            onClick={() => showToast('Complete as fases em sequência para avançar pelos mundos bíblicos.', 'help')}
             className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-sacred-brand dark:text-sacred-neon"
             title="Ajuda"
           >
@@ -73,16 +76,15 @@ export const WorldMap: React.FC<WorldMapProps> = ({ onNavigate, showToast }) => 
 
       {/* Main Path Container */}
       <main className="flex-1 relative flex flex-col items-center pt-6 pb-12 px-4 w-full max-w-md mx-auto">
-        {/* Central Connecting Vertical Line */}
         <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-slate-200 dark:bg-slate-800 -translate-x-1/2 z-0" />
 
         {CANONICAL_WORLDS.map((world, idx) => {
-          const isActive = world.isUnlocked && idx === 0; // Mundo 1 é o ativo
-          const isCompleted = false; // futuramente: verificar progresso
           const isLocked = !world.isUnlocked;
+          const worldCompletionPct = getWorldCompletion(world.id);
+          const worldPhases = getJourneyPhases(world.id);
+          const completedCount = worldPhases.filter((p) => p.isCompleted).length;
 
           if (isLocked) {
-            /* ── MUNDO BLOQUEADO ── */
             return (
               <div key={world.id} className="relative w-full z-10 mb-10 opacity-75">
                 <div
@@ -127,7 +129,6 @@ export const WorldMap: React.FC<WorldMapProps> = ({ onNavigate, showToast }) => 
             );
           }
 
-          /* ── MUNDO ATUAL (desbloqueado) ── */
           return (
             <div key={world.id} className="relative w-full z-10 mb-10">
               <div className="absolute -inset-1 bg-gradient-to-r from-sacred-brand to-sacred-neon rounded-3xl blur opacity-30 animate-pulse" />
@@ -159,21 +160,21 @@ export const WorldMap: React.FC<WorldMapProps> = ({ onNavigate, showToast }) => 
                     </div>
                     <div className="flex flex-col items-end">
                       <span className="text-xl font-black text-sacred-brand dark:text-sacred-neon">
-                        {tracks.lifetimeXp > 0 ? `${Math.min(Math.round((tracks.lifetimeXp / 500) * 100), 100)}%` : '0%'}
+                        {worldCompletionPct}%
                       </span>
                     </div>
                   </div>
 
                   <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full mb-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-sacred-brand to-sacred-neon h-full rounded-full"
-                      style={{ width: `${Math.min(Math.round((tracks.lifetimeXp / 500) * 100), 100)}%` }}
+                      className="bg-gradient-to-r from-sacred-brand to-sacred-neon h-full rounded-full transition-all duration-500"
+                      style={{ width: `${worldCompletionPct}%` }}
                     />
                   </div>
 
                   <div className="flex items-center justify-between mt-3">
                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      {world.totalPhases} Fases • {world.achievementBadge}
+                      {completedCount}/{world.totalPhases} Fases • {world.achievementBadge}
                     </span>
                     <button
                       onClick={() => handleWorldClick(world.id, true)}
@@ -194,7 +195,9 @@ export const WorldMap: React.FC<WorldMapProps> = ({ onNavigate, showToast }) => 
       {/* Floating Ask BiblIA Pill */}
       <button
         onClick={() => onNavigate('screen-ai')}
-        className="fixed bottom-24 right-4 z-40 bg-white dark:bg-surface-dark text-slate-800 dark:text-white py-2 px-3.5 rounded-full shadow-xl border border-sacred-brand/30 flex items-center gap-2 hover:scale-105 transition-transform"
+        className={`fixed right-4 z-40 bg-white dark:bg-surface-dark text-slate-800 dark:text-white py-2 px-3.5 rounded-full shadow-xl border border-sacred-brand/30 flex items-center gap-2 hover:scale-105 transition-all ${
+          isPlaying ? 'bottom-36' : 'bottom-24'
+        }`}
       >
         <div className="size-6 rounded-full bg-sacred-brand/10 dark:bg-sacred-neon/15 flex items-center justify-center text-sacred-brand dark:text-sacred-neon">
           <span className="material-symbols-outlined text-[16px]">smart_toy</span>

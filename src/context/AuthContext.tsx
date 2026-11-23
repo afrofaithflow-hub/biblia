@@ -1,8 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import { UserProfile, PlanTier } from '../types/biblia';
 import { performGuestMigration } from '../lib/guestMigrationService';
+
+export type AuthModalTab = 'signin' | 'signup';
+
+interface SignUpResult {
+  error: AuthError | Error | null;
+  needsEmailConfirmation?: boolean;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -10,99 +16,204 @@ interface AuthContextType {
   loading: boolean;
   isConfigured: boolean;
   isAuthModalOpen: boolean;
-  openAuthModal: () => void;
+  authModalInitialTab: AuthModalTab;
+  isPasswordRecovery: boolean;
+  openAuthModal: (tab?: AuthModalTab) => void;
   closeAuthModal: () => void;
+  clearPasswordRecovery: () => void;
   signInWithEmail: (email: string, password: string) => Promise<{ error: AuthError | Error | null }>;
   signUpWithEmail: (
     email: string,
     password: string,
     displayName: string
+  ) => Promise<SignUpResult>;
+  signInWithOtp: (email: string, displayName?: string) => Promise<{ error: AuthError | Error | null }>;
+  verifyOtp: (
+    email: string,
+    token: string,
+    displayName?: string
   ) => Promise<{ error: AuthError | Error | null }>;
-  signInWithOtp: (email: string) => Promise<{ error: AuthError | Error | null }>;
-  verifyOtp: (email: string, token: string) => Promise<{ error: AuthError | Error | null }>;
   signInWithOAuth: (
     provider: 'google' | 'apple'
   ) => Promise<{ error: AuthError | Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: AuthError | Error | null }>;
+  updateDisplayName: (displayName: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const UNAVAILABLE_AUTH_ERROR = new Error(
-  'A ligação a contas ainda não está configurada. Pode continuar como visitante neste dispositivo.'
+  'A ligação a contas ainda não está configurada neste ambiente. Pode continuar como visitante.'
 );
+
+async function ensureUserProfile(authUser: User, explicitDisplayName?: string): Promise<void> {
+  if (!isSupabaseConfigured || !authUser?.id) return;
+
+  try {
+    const cleanExplicitName = explicitDisplayName?.trim();
+    const { data: existing, error: readErr } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .eq('id', authUser.id)
+      .maybeSingle();
+
+    if (readErr) return;
+
+    if (!existing) {
+      const derivedName =
+        cleanExplicitName ||
+        String(authUser.user_metadata?.display_name || authUser.user_metadata?.full_name || '').trim() ||
+        authUser.email?.split('@')[0] ||
+        'Discípulo';
+
+      // Nunca envia plan_tier do cliente — respeita DEFAULT 0 do banco de dados
+      await supabase.from('profiles').insert({
+        id: authUser.id,
+        email: authUser.email,
+        display_name: derivedName,
+        avatar_url: authUser.user_metadata?.avatar_url || null,
+      });
+    } else if (cleanExplicitName && cleanExplicitName !== existing.display_name) {
+      await supabase
+        .from('profiles')
+        .update({ display_name: cleanExplicitName })
+        .eq('id', authUser.id);
+    }
+  } catch {
+    // Falha não-fatal: o trigger handle_new_user no servidor garante integridade
+  }
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalInitialTab, setAuthModalInitialTab] = useState<AuthModalTab>('signin');
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
-    if (isSupabaseConfigured) {
-      // 1. Check current Supabase session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-        if (session?.user) {
-          performGuestMigration(session.user.id).catch(() => {});
-        }
-      });
-
-      // 2. Listen to real auth events
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-        if (session?.user) {
-          performGuestMigration(session.user.id).catch(() => {});
-        }
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    } else {
-      // Um visitante local não é uma conta fictícia nem cria sessão simulada.
+    if (!isSupabaseConfigured) {
       setLoading(false);
+      return;
     }
+
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setLoading(false);
+      if (currentSession?.user) {
+        ensureUserProfile(currentSession.user).catch(() => {});
+        performGuestMigration(currentSession.user.id).catch(() => {});
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      setLoading(false);
+
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+        setAuthModalInitialTab('signin');
+        setIsAuthModalOpen(true);
+      }
+
+      if (nextSession?.user && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+        ensureUserProfile(nextSession.user).catch(() => {});
+        performGuestMigration(nextSession.user.id).catch(() => {});
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const openAuthModal = () => setIsAuthModalOpen(true);
-  const closeAuthModal = () => setIsAuthModalOpen(false);
+  const openAuthModal = useCallback((tab?: AuthModalTab) => {
+    setAuthModalInitialTab(tab === 'signup' ? 'signup' : 'signin');
+    setIsAuthModalOpen(true);
+  }, []);
+
+  const closeAuthModal = useCallback(() => {
+    setIsAuthModalOpen(false);
+  }, []);
+
+  const clearPasswordRecovery = useCallback(() => {
+    setIsPasswordRecovery(false);
+  }, []);
 
   const signInWithEmail = async (email: string, password: string) => {
-    if (!isSupabaseConfigured) {
-      return { error: UNAVAILABLE_AUTH_ERROR };
-    }
+    if (!isSupabaseConfigured) return { error: UNAVAILABLE_AUTH_ERROR };
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) closeAuthModal();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (!error && data.user) {
+      await ensureUserProfile(data.user);
+      performGuestMigration(data.user.id).catch(() => {});
+      closeAuthModal();
+    }
     return { error };
   };
 
-  const signInWithOtp = async (email: string) => {
-    if (!isSupabaseConfigured) {
-      return { error: UNAVAILABLE_AUTH_ERROR };
+  const signUpWithEmail = async (
+    email: string,
+    password: string,
+    displayName: string
+  ): Promise<SignUpResult> => {
+    if (!isSupabaseConfigured) return { error: UNAVAILABLE_AUTH_ERROR };
+
+    const cleanName = displayName.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    const { data, error } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: {
+          display_name: cleanName,
+        },
+      },
+    });
+
+    if (error) {
+      return { error };
     }
 
+    // Se a confirmação de e-mail estiver ativa no Supabase, data.session virá nulo
+    if (data.session && data.user) {
+      await ensureUserProfile(data.user, cleanName);
+      performGuestMigration(data.user.id).catch(() => {});
+      closeAuthModal();
+      return { error: null, needsEmailConfirmation: false };
+    }
+
+    return { error: null, needsEmailConfirmation: true };
+  };
+
+  const signInWithOtp = async (email: string, displayName?: string) => {
+    if (!isSupabaseConfigured) return { error: UNAVAILABLE_AUTH_ERROR };
+
+    const cleanName = displayName?.trim();
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: {
         shouldCreateUser: true,
+        data: cleanName ? { display_name: cleanName } : undefined,
       },
     });
     return { error };
   };
 
-  const verifyOtp = async (email: string, token: string) => {
-    if (!isSupabaseConfigured) {
-      return { error: UNAVAILABLE_AUTH_ERROR };
-    }
+  const verifyOtp = async (email: string, token: string, displayName?: string) => {
+    if (!isSupabaseConfigured) return { error: UNAVAILABLE_AUTH_ERROR };
 
     const { data, error } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
@@ -111,13 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (!error && data.user) {
-      // Criação/atualização defensiva de perfil
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        email: data.user.email,
-        display_name: data.user.email?.split('@')[0] || 'Crente',
-        plan_tier: 0,
-      });
+      await ensureUserProfile(data.user, displayName);
       performGuestMigration(data.user.id).catch(() => {});
       closeAuthModal();
     }
@@ -125,39 +230,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const signUpWithEmail = async (email: string, password: string, displayName: string) => {
-    if (!isSupabaseConfigured) {
-      return { error: UNAVAILABLE_AUTH_ERROR };
-    }
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: displayName.trim(),
-        },
-      },
-    });
-
-    if (!error && data.user) {
-      // Upsert user profile row in database
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        email: data.user.email,
-        display_name: displayName.trim(),
-        plan_tier: 0,
-      });
-      closeAuthModal();
-    }
-
-    return { error };
-  };
-
   const signInWithOAuth = async (provider: 'google' | 'apple') => {
-    if (!isSupabaseConfigured) {
-      return { error: UNAVAILABLE_AUTH_ERROR };
-    }
+    if (!isSupabaseConfigured) return { error: UNAVAILABLE_AUTH_ERROR };
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -174,16 +248,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setUser(null);
     setSession(null);
+    setIsPasswordRecovery(false);
   };
 
   const resetPassword = async (email: string) => {
-    if (!isSupabaseConfigured) {
-      return { error: null };
-    }
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+    if (!isSupabaseConfigured) return { error: UNAVAILABLE_AUTH_ERROR };
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: window.location.origin,
     });
     return { error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    if (!isSupabaseConfigured) return { error: UNAVAILABLE_AUTH_ERROR };
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (!error) {
+      setIsPasswordRecovery(false);
+      closeAuthModal();
+    }
+    return { error };
+  };
+
+  const updateDisplayName = async (displayName: string): Promise<{ error: Error | null }> => {
+    const trimmed = displayName.trim();
+    if (trimmed.length < 2) {
+      return { error: new Error('O nome deve ter pelo menos 2 caracteres.') };
+    }
+    if (!isSupabaseConfigured || !user) {
+      return { error: new Error('Entre na sua conta para atualizar o perfil.') };
+    }
+
+    const { data: updatedAuth, error: authErr } = await supabase.auth.updateUser({
+      data: { display_name: trimmed },
+    });
+    if (authErr) {
+      return { error: authErr };
+    }
+    if (updatedAuth.user) {
+      setUser(updatedAuth.user);
+    }
+
+    const { error: profErr } = await supabase
+      .from('profiles')
+      .update({ display_name: trimmed })
+      .eq('id', user.id);
+
+    if (profErr) {
+      return { error: new Error(profErr.message) };
+    }
+
+    return { error: null };
   };
 
   return (
@@ -194,8 +310,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         isConfigured: isSupabaseConfigured,
         isAuthModalOpen,
+        authModalInitialTab,
+        isPasswordRecovery,
         openAuthModal,
         closeAuthModal,
+        clearPasswordRecovery,
         signInWithEmail,
         signUpWithEmail,
         signInWithOtp,
@@ -203,6 +322,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithOAuth,
         signOut,
         resetPassword,
+        updatePassword,
+        updateDisplayName,
       }}
     >
       {children}

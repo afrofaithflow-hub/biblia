@@ -1,6 +1,5 @@
 /**
- * BiblIA — Exercício de Múltipla Escolha (com embaralhamento aleatório Fisher-Yates)
- * Elimina o vício da resposta correta na alínea 'A'
+ * BiblIA — Exercício de Múltipla Escolha (Duolingo Card Style)
  */
 
 import React, { useMemo } from 'react';
@@ -11,15 +10,17 @@ interface MultipleChoiceExerciseProps {
   question: GameQuestion;
   isAnswered: boolean;
   selectedOption: string | null;
+  hintActive?: boolean;
   onSelectOption: (option: string, isCorrect: boolean) => void;
 }
 
-const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
 
 export const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
   question,
   isAnswered,
   selectedOption,
+  hintActive = false,
   onSelectOption,
 }) => {
   // Embaralhamento determinístico por questão
@@ -29,6 +30,13 @@ export const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
   }, [question.id]);
 
   const correctAnswer = question.answers[0];
+
+  // Dica 50/50: elimina até 2 alternativas erradas de forma estável durante a questão
+  const eliminatedOptions = useMemo(() => {
+    const wrong = shuffledOptions.filter((opt) => opt !== correctAnswer);
+    const toEliminate = Math.min(2, Math.max(0, shuffledOptions.length - 2));
+    return new Set(wrong.slice(0, toEliminate));
+  }, [shuffledOptions, correctAnswer]);
 
   return (
     <div className="w-full space-y-4">
@@ -48,11 +56,15 @@ export const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
           const letter = OPTION_LETTERS[idx] || String(idx + 1);
           const isSelected = selectedOption === option;
           const isCorrect = option === correctAnswer;
+          const isEliminated = hintActive && !isAnswered && eliminatedOptions.has(option);
 
           let cardClasses =
             'w-full p-4 rounded-2xl border text-left flex items-center justify-between transition-all duration-200 shadow-sm active:scale-[0.99] ';
 
-          if (!isAnswered) {
+          if (isEliminated) {
+            cardClasses +=
+              'border-slate-200/40 dark:border-white/5 bg-slate-100/60 dark:bg-surface-dark/30 text-slate-400 opacity-35 line-through cursor-not-allowed pointer-events-none';
+          } else if (!isAnswered) {
             cardClasses += isSelected
               ? 'border-sacred-brand bg-sacred-light/60 dark:bg-sacred-neon/15 text-sacred-brand dark:text-sacred-neon font-bold'
               : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-surface-dark hover:border-sacred-brand/50 text-slate-800 dark:text-slate-200';
@@ -71,11 +83,11 @@ export const MultipleChoiceExercise: React.FC<MultipleChoiceExerciseProps> = ({
             <button
               key={`${question.id}-${idx}-${option}`}
               onClick={() => {
-                if (!isAnswered) {
+                if (!isAnswered && !isEliminated) {
                   onSelectOption(option, isCorrect);
                 }
               }}
-              disabled={isAnswered}
+              disabled={isAnswered || isEliminated}
               className={cardClasses}
             >
               <div className="flex items-center gap-3">

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAudio } from '../../context/AudioContext';
 import { useTheme } from '../../context/ThemeContext';
-import { AdBanner } from '../shared/AdBanner';
 import {
   BIBLE_BOOKS,
   BIBLE_TRANSLATIONS,
@@ -35,6 +34,17 @@ import { BookSelectorModal } from './BookSelectorModal';
 import { VerseActionSheet } from './VerseActionSheet';
 import { VerseNoteModal } from './VerseNoteModal';
 import { ShareVerseModal } from './ShareVerseModal';
+import type { RecoverySession } from '../../types/gameContracts';
+import {
+  clampContextToChapter,
+  computeMinReadSeconds,
+  findBibleBookByName,
+} from '../../lib/scriptureReference';
+import {
+  cancelReadingRecovery,
+  loadActiveLessonSession,
+  updateReadingProgress,
+} from '../../lib/gameRecovery';
 
 interface BibleReaderProps {
   onNavigate: (screen: string) => void;
@@ -71,8 +81,21 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
   const { loadTrack, pause, togglePlay, currentVerseIndex, isPlaying, currentTrack } = useAudio();
   const { themeMode } = useTheme();
 
-  // Scroll ref
+  // Scroll ref e referência pendente de salto
   const mainScrollRef = useRef<HTMLDivElement>(null);
+  const pendingScrollVerseRef = useRef<number | null>(null);
+
+  // Estado da Leitura Orientada (Fluxo Ler -> Compreender -> Recuperar)
+  const [recoverySession, setRecoverySession] = useState<RecoverySession | null>(() => {
+    const rec = loadActiveLessonSession()?.recovery;
+    if (rec && ['reading_pending', 'reading_in_progress', 'reading_validated'].includes(rec.status)) {
+      return rec;
+    }
+    return null;
+  });
+  const sawStartRef = useRef<boolean>(recoverySession?.sawStartVerse ?? false);
+  const sawEndRef = useRef<boolean>(recoverySession?.sawEndVerse ?? false);
+  const visibleMsRef = useRef<number>(recoverySession?.accumulatedVisibleTimeMs ?? 0);
 
   // Dados do Capítulo Atual
   const [chapterData, setChapterData] = useState(() => getBibleChapter(currentBook, currentChapter, settings.translation));
@@ -124,8 +147,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
     saveLastRead(book, chapter, verse, settings.translation);
   };
 
-  // Referências do Assistente Teológico chegam por um pedido transitório, nunca
-  // por texto livre. Validamos o livro/capítulo antes de alterar a leitura.
+  // Referências do Assistente Teológico e da Jornada chegam por um pedido transitório.
+  // Validamos e normalizamos acentos/abreviações antes de alterar a leitura.
   useEffect(() => {
     const rawReference = window.localStorage.getItem('biblia_pending_reference');
     if (!rawReference) return;
@@ -134,30 +157,42 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
     try {
       const reference = JSON.parse(rawReference) as { book?: unknown; chapter?: unknown; verses?: unknown };
       const book = typeof reference.book === 'string'
-        ? BIBLE_BOOKS.find((item) => item.name === reference.book)
+        ? findBibleBookByName(reference.book)
         : undefined;
       const chapter = Number(reference.chapter);
       const firstVerse = Array.isArray(reference.verses)
         ? reference.verses.map(Number).find((verse) => Number.isInteger(verse) && verse > 0)
-        : undefined;
+        : 1;
 
       if (!book || !Number.isInteger(chapter) || chapter < 1 || chapter > book.totalChapters || !firstVerse) {
         showToast('A referência recebida não é válida para o leitor.', 'error');
         return;
       }
 
+      pendingScrollVerseRef.current = firstVerse;
       navigateToChapter(book.name, chapter, firstVerse);
-      window.setTimeout(() => {
-        document.getElementById(`verse-${firstVerse}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 450);
     } catch {
       showToast('Não foi possível abrir a referência bíblica.', 'error');
     }
   }, []);
 
-  // Scroll to top quando muda de capítulo ou scroll inicial ao versículo memorizado
+  // Scroll determinístico após o capítulo carregar: respeita pendingScrollVerseRef antes do topo
   const initialVerseScrolled = useRef(false);
   useEffect(() => {
+    if (isChapterLoading) return;
+
+    if (pendingScrollVerseRef.current !== null) {
+      const target = pendingScrollVerseRef.current;
+      pendingScrollVerseRef.current = null;
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`verse-${target}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+
     if (!initialVerseScrolled.current && lastRead.verse && lastRead.verse > 1) {
       initialVerseScrolled.current = true;
       const timer = setTimeout(() => {
@@ -165,12 +200,96 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-      }, 350);
+      }, 300);
       return () => clearTimeout(timer);
     } else if (mainScrollRef.current) {
       mainScrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [currentBook, currentChapter, lastRead]);
+  }, [currentBook, currentChapter, isChapterLoading, lastRead]);
+
+  // Camada A: Evidência de leitura orientada (versículo + contexto, tempo visível real e scroll)
+  const recoveryContext = useMemo(() => {
+    if (!recoverySession) return null;
+    const isSameChapter =
+      recoverySession.targetBook === currentBook &&
+      recoverySession.targetChapter === currentChapter;
+    const range = clampContextToChapter(
+      recoverySession.contextStartVerse,
+      recoverySession.contextEndVerse,
+      Math.max(1, chapterData.verses.length)
+    );
+    const contextVerses = isSameChapter
+      ? chapterData.verses.filter((v) => v.num >= range.start && v.num <= range.end)
+      : [];
+    const wordCount = contextVerses.reduce(
+      (acc, v) => acc + v.text.trim().split(/\s+/).filter(Boolean).length,
+      0
+    );
+    const minReadSeconds = computeMinReadSeconds(wordCount);
+    return { isSameChapter, range, minReadSeconds };
+  }, [recoverySession, currentBook, currentChapter, chapterData.verses]);
+
+  useEffect(() => {
+    if (!recoverySession || !recoveryContext?.isSameChapter || isChapterLoading) return;
+    if (chapterData.verses.length === 0) return;
+
+    const root = mainScrollRef.current;
+    const startEl = document.getElementById(`verse-${recoveryContext.range.start}`);
+    const endEl = document.getElementById(`verse-${recoveryContext.range.end}`);
+
+    let observer: IntersectionObserver | null = null;
+    if (root && typeof IntersectionObserver !== 'undefined' && (startEl || endEl)) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            if (entry.target === startEl) sawStartRef.current = true;
+            if (entry.target === endEl) sawEndRef.current = true;
+          }
+        },
+        { root, threshold: 0.25 }
+      );
+      if (startEl) observer.observe(startEl);
+      if (endEl) observer.observe(endEl);
+    } else {
+      sawStartRef.current = true;
+      sawEndRef.current = true;
+    }
+
+    let lastTick = Date.now();
+    const interval = window.setInterval(() => {
+      const now = Date.now();
+      const delta = Math.min(500, Math.max(0, now - lastTick));
+      lastTick = now;
+
+      if (document.visibilityState === 'visible' && sawStartRef.current) {
+        visibleMsRef.current += delta;
+      }
+
+      const updated = updateReadingProgress({
+        accumulatedVisibleTimeMs: visibleMsRef.current,
+        sawStartVerse: sawStartRef.current,
+        sawEndVerse: sawEndRef.current,
+        minReadSeconds: recoveryContext.minReadSeconds,
+      });
+      if (updated) {
+        setRecoverySession(updated);
+      }
+    }, 250);
+
+    return () => {
+      observer?.disconnect();
+      window.clearInterval(interval);
+    };
+  }, [
+    recoverySession?.questionId,
+    recoveryContext?.isSameChapter,
+    recoveryContext?.range.start,
+    recoveryContext?.range.end,
+    recoveryContext?.minReadSeconds,
+    isChapterLoading,
+    chapterData.verses.length,
+  ]);
 
   // Durante leitura por texto, grava o versículo que ocupa a zona central do leitor.
   // A posição é pessoal/local e não declara o capítulo como concluído.
@@ -703,8 +822,101 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
         </button>
       )}
 
-      {/* Anúncio Banner no Plano Gratuito */}
-      {!settings.distractionFree && <AdBanner />}
+      {/* ── BANNER DE LEITURA ORIENTADA (FLUXO LER -> COMPREENDER -> RECUPERAR) ── */}
+      {recoverySession && recoveryContext && (
+        <div className="shrink-0 z-30 border-b border-sacred-brand/25 dark:border-sacred-neon/30 bg-sacred-light/95 dark:bg-[#0b2320]/95 backdrop-blur-md px-4 py-2.5">
+          <div className="max-w-md mx-auto w-full space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg text-sacred-brand dark:text-sacred-neon shrink-0">
+                  {recoverySession.status === 'reading_validated' ? 'verified' : 'auto_stories'}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-extrabold text-sacred-deep dark:text-white truncate">
+                    Leitura Orientada • {recoverySession.sourceReference}
+                    {recoveryContext.isSameChapter
+                      ? ` (vv. ${recoveryContext.range.start}–${recoveryContext.range.end})`
+                      : ''}
+                  </p>
+                  <p className="text-[10px] font-medium text-slate-600 dark:text-slate-300 truncate">
+                    {!recoveryContext.isSameChapter
+                      ? `Abra ${recoverySession.sourceReference} para validar a leitura.`
+                      : recoverySession.status === 'reading_validated'
+                      ? 'Leitura validada! Avance para a questão de repescagem.'
+                      : !recoverySession.sawEndVerse
+                      ? `Role até o versículo ${recoveryContext.range.end} para ler o contexto.`
+                      : `Leia com atenção (${Math.max(
+                          1,
+                          Math.ceil(
+                            recoveryContext.minReadSeconds -
+                              recoverySession.accumulatedVisibleTimeMs / 1000
+                          )
+                        )}s restantes)…`}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  cancelReadingRecovery();
+                  onNavigate('screen-jogo-licao');
+                }}
+                className="shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-500 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+
+            {recoveryContext.isSameChapter && (
+              <div className="h-1.5 w-full rounded-full bg-slate-200/80 dark:bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-sacred-brand dark:bg-sacred-neon transition-all duration-300"
+                  style={{
+                    width: `${
+                      recoverySession.status === 'reading_validated'
+                        ? 100
+                        : Math.min(
+                            98,
+                            Math.round(
+                              (recoverySession.accumulatedVisibleTimeMs /
+                                (recoveryContext.minReadSeconds * 1000)) *
+                                100
+                            )
+                          )
+                    }%`,
+                  }}
+                />
+              </div>
+            )}
+
+            {!recoveryContext.isSameChapter ? (
+              <button
+                onClick={() => {
+                  const first = recoverySession.targetVerses[0] || 1;
+                  pendingScrollVerseRef.current = first;
+                  navigateToChapter(
+                    recoverySession.targetBook,
+                    recoverySession.targetChapter,
+                    first
+                  );
+                }}
+                className="w-full py-2 rounded-xl bg-sacred-brand dark:bg-sacred-neon text-white dark:text-slate-950 text-xs font-extrabold flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-sm">menu_book</span>
+                <span>Voltar para {recoverySession.sourceReference}</span>
+              </button>
+            ) : recoverySession.status === 'reading_validated' ? (
+              <button
+                onClick={() => onNavigate('screen-jogo-licao')}
+                className="w-full py-2.5 rounded-xl bg-sacred-brand dark:bg-sacred-neon text-white dark:text-slate-950 text-xs font-black shadow-md flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"
+              >
+                <span>Terminei a leitura → Fazer repescagem (+1 ❤️)</span>
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            ) : null}
+          </div>
+        </div>
+      )}
 
       {/* ── ÁREA PRINCIPAL DE LEITURA (SCROLLÁVEL) ── */}
       <main
@@ -865,7 +1077,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
                   </span>
                   <div className="text-[11px] text-gray-700 dark:text-gray-300 leading-relaxed">
                     <span className="font-bold text-amber-800 dark:text-amber-300">
-                      {!chapterData.sourceVerified ? 'Amostra de protótipo: ' : 'Passagem Selecionada: '}
+                      Passagem Selecionada:{' '}
                     </span>
                     {chapterData.notice}
                   </div>
@@ -878,6 +1090,14 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
                 const isFavorite = !!favorites[verseId];
                 const note = verseNotes[verseId];
                 const isSpokenNow = isThisChapterPlaying && currentVerseIndex === idx;
+                const isTargetRecoveryVerse =
+                  Boolean(recoveryContext?.isSameChapter) &&
+                  Boolean(recoverySession?.targetVerses.includes(verse.num));
+                const isContextRecoveryVerse =
+                  Boolean(recoveryContext?.isSameChapter) &&
+                  Boolean(recoveryContext) &&
+                  verse.num >= recoveryContext!.range.start &&
+                  verse.num <= recoveryContext!.range.end;
 
                 return (
                   <div
@@ -888,11 +1108,23 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
                     className={`relative group rounded-xl p-2.5 -mx-2.5 transition-all cursor-pointer ${
                       isSpokenNow
                         ? 'bg-sacred-light/90 dark:bg-sacred-neon/15 border-l-4 border-sacred-brand dark:border-sacred-neon ring-1 ring-sacred-brand/20 shadow-sm'
+                        : isTargetRecoveryVerse
+                        ? 'bg-sacred-light/80 dark:bg-sacred-neon/15 border-l-4 border-sacred-brand dark:border-sacred-neon ring-1 ring-sacred-brand/25'
+                        : isContextRecoveryVerse
+                        ? 'bg-sacred-light/35 dark:bg-sacred-neon/5 border-l-2 border-sacred-brand/40 dark:border-sacred-neon/40'
                         : highlight
                         ? `${getHighlightBg(highlight)} rounded-lg`
                         : 'hover:bg-gray-100/60 dark:hover:bg-gray-800/40'
                     }`}
                   >
+                    {/* Badge do Versículo da Questão (Leitura Orientada) */}
+                    {isTargetRecoveryVerse && !isSpokenNow && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sacred-brand/15 dark:bg-sacred-neon/20 text-sacred-brand dark:text-sacred-neon text-[9.5px] font-black uppercase tracking-wider mr-2 align-middle">
+                        <span className="material-symbols-outlined text-[12px]">bookmark</span>
+                        <span>Versículo da questão</span>
+                      </span>
+                    )}
+
                     {/* Badge de Fala do Áudio em Tempo Real */}
                     {isSpokenNow && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sacred-brand dark:bg-sacred-neon text-white dark:text-slate-950 text-[9.5px] font-black uppercase tracking-wider shadow-xs mb-1.5 animate-pulse">

@@ -103,7 +103,7 @@ export async function performGuestMigration(userId: string): Promise<{ success: 
           last_book: parsed.book || 'Gênesis',
           last_chapter: parsed.chapter || 1,
           last_verse: parsed.verse || 1,
-          translation_id: parsed.translationId || 'blivre',
+          translation_id: parsed.translation || parsed.translationId || 'blivre',
         };
       } catch {}
     }

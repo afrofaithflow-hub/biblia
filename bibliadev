@@ -903,3 +903,50 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Inicialização de estado reativo respeitando o parâmetro de query `?screen=...` dos atalhos da PWA.
 - **Validação de Build:** `npm.cmd run build` executado com **Exit Code 0** (202 módulos, PWA v2.0.0 com 78 entries pré-cacheadas).
 - **Assinatura:** Antigravity AI Engine — 20 de Novembro de 2026, 19:45 (Africa/Maputo).
+
+
+
+### 23/11/2026 — 11:45 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Refinamentos Finais do Jogo e Mecânica "Ler → Compreender → Recuperar" (implementado)
+- **Correções Imediatas e Ergonomia (`GameLessonHost.tsx`, `canonicalGameData.ts`, `FillBlanksExercise.tsx`, `GameFillBlanks.tsx`):**
+  - **Contador Centralizado:** Reestruturado o cabeçalho de `GameLessonHost.tsx` em grade tripartida (`grid-cols-[1fr_auto_1fr]`), centralizando o temporizador acima da barra de progresso linear e equilibrando controles de sair/áudio/vidas.
+  - **Bug "Haja luz; e houve luz" e Palavras Repetidas:** Corrigida a questão `gen-1-fb1` em `canonicalGameData.ts` e criada a função `ensureWordBankHasRequiredAnswers()` em `gameSession.ts`, garantindo cópias suficientes e controle de uso por instância (`priorSameWordCount < countUsed`) em `FillBlanksExercise.tsx` e `GameFillBlanks.tsx`.
+  - **Parser Normalizado de Referências (`src/lib/scriptureReference.ts`):** Resolvidas referências com diacríticos variantes (`Génesis`/`Gênesis`), abreviações, livros numerados e intervalos (`–`/`-`), calculando faixa de contexto próximo (3–5 versículos ao redor do alvo).
+- **Fluxo "Ler → Compreender → Recuperar" (`src/lib/gameRecovery.ts`, `useGameSession.ts`, `BibleReader.tsx`, `GameLessonHost.tsx`):**
+  - **Sessão Persistente:** Estado ativo da lição (`attemptId`, progresso, vidas, logs e `RecoverySession`) salvo em `localStorage` (`biblia:active-lesson-session` com TTL de 2h), sobrevivendo à navegação para a Bíblia e reloads.
+  - **Camada A (Evidência de Leitura Orientada no `BibleReader.tsx`):** Destaque visual do bloco de contexto e versículo alvo, scroll determinístico após carregamento assíncrono do capítulo, e validação via `IntersectionObserver` + tempo visível real (`document.visibilityState === 'visible'`) proporcional à contagem de palavras (`5–12s`), com banner dedicado e botão *"Terminei a leitura → Fazer repescagem (+1 ❤️)"*.
+  - **Camada B (Repescagem Reformulada):** Adicionadas variantes `recoveryVariant` curadas em todas as 42 questões de `WORLD_1_QUESTIONS` (além de fallback determinístico sobre o texto lido), avaliando o mesmo conhecimento em formato distinto.
+  - **Regras Anti-Burla e Pausa a 0 Vidas:** Limite rígido de 2 recuperações por lição (`MAX_RECOVERIES_PER_LESSON`), resolução atómica e idempotente via `resolveRecoveryAnswer()`, preservação da questão original como erro sem inflar precisão/XP/estrelas, inelegibilidade após falha na repescagem e tela *"Última Chance pela Palavra"* ao zerar vidas com recuperações disponíveis.
+- **Correções Estruturais nas 3 Trilhas e Revisão Espaçada Real (`gameSession.ts`, `gameJourney.ts`, `GameStats.tsx`, `GameLessonSummary.tsx`):**
+  - Eliminada inflação de `masteryStars` ao repetir fases (calculado pela soma canónica em `getTotalMasteryStars()`).
+  - Sincronizados `streakDays` e `topicMastery` reais em `saveGameResult()`.
+  - Aplicado teto diário `MAX_DAILY_LEAGUE_TALENTS` (150) e redução em repetição de fases já dominadas.
+  - Implementado modo `'review'` real (`getReviewSessionQuestions()` e `resolveReviewItemResult()` com promoção Leitner `1→3→7→14→30` dias e desbloqueio da 3ª estrela via `awardThirdMasteryStar()`).
+  - Desafio Diário com rotação determinística diária em `Africa/Maputo` (`getDailyQuestionsForDate()`).
+  - Dica 50/50 real em `MultipleChoiceExercise.tsx`, pausa justa do timer limitada a 1x durante TTS por questão, e substituição do calendário mock (`i % 3 !== 2`) em `GameStats.tsx` por `getRecentPracticeDates(28)`.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (204 módulos transformados, PWA gerada).
+  - Script de validação lógica (`verify_game_logic.mjs`): todas as 75 referências bíblicas parseadas, banco repetido validado, máquina de estados/idempotência/limite de 2 recuperações e 3 trilhas aprovados.
+- **Assinatura:** Antigravity AI Engine — 23 de Novembro de 2026, 11:45 (Africa/Maputo).
+
+
+
+### 23/11/2026 — 15:00 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Acabamento Final v1.0, Expurgo Total de Mockups e Sign In / Sign Up Completo (implementado)
+- **Expurgo Total de Mockups, Sandbox e Assets Externos:**
+  - Removidos definitivamente `public/prototipos/` (31 PNGs de protótipo), `public/sw.js` legado, `WebhookSimulatorDrawer.tsx`, `src/lib/supabase.ts` (`mock-anon-key`), `src/lib/audioService.ts`, `AdBanner.tsx` (anúncio fictício "Livraria Semeador") e telas legadas não utilizadas (`QuizScreen.tsx`, `GameTrueFalse.tsx`, `GameFillBlanks.tsx`).
+  - Substituídas todas as URLs externas (`unsplash.com`, `lh3.googleusercontent.com/aida-public`) por arte vetorial/CSS local offline e `/pwa-512x512.png` na MediaSession (`audioEngine.ts`), garantindo resiliência 100% offline na PWA.
+  - Limpos defaults de protótipo em `canonicalGameData.ts` (`WORLD_1_PHASES` inicia limpo com `stars: 0, isCompleted: false`), rótulos `"PRD v2.1"`/`"Amostra de protótipo"`, e alinhado `PLANS` (`subscriptionService.ts`) apenas com funcionalidades reais em produção.
+- **Sign In / Sign Up Completo, Seguro e Gestão de Perfil:**
+  - Criada migração SQL canónica `supabase/migrations/20261123000001_launch_auth_profiles_and_groups.sql` com trigger `on_auth_user_created` (`handle_new_user`), backfill de utilizadores existentes, proteção `BEFORE UPDATE` impedindo alteração cliente de `plan_tier`/`is_master_badge`, e RPCs reais `create_church_group` e `leave_church_group`.
+  - Corrigido bug crítico em `AuthContext.tsx` onde `verifyOtp` e `signUpWithEmail` faziam `upsert` com `plan_tier: 0`, substituído pelo helper seguro `ensureUserProfile()`, além de reset limpo de perfil em `SubscriptionContext.tsx` no `signOut` e correção da chave `translation` em `guestMigrationService.ts`.
+  - Criado `src/lib/authErrors.ts` para tradução natural de erros Supabase Auth para Português e reconstruído `AuthModal.tsx` com abas **Entrar** e **Criar Conta (com Nome)**, **Google OAuth**, **Palavra-passe + Recuperação (`PASSWORD_RECOVERY`)**, e opção **Código OTP de 6 dígitos**.
+  - Adicionado tratamento de erros de callback OAuth e códigos de convite (`?invite=` / `/convite/...`) em `App.tsx`, e edição real de nome de perfil em `ProfileScreen.tsx`.
+- **Acabamentos Funcionais Reais em Todas as Telas:**
+  - `HomeScreen.tsx`: próxima fase dinâmica via `getCurrentJourneyPhase()`, Versículo do Dia rotativo determinístico em `Africa/Maputo` carregando texto BLIVRE real com ações corretas para Ler/Ouvir/Partilhar, e Diário de Oração local (`biblia_prayer_journal_v1`).
+  - `ClanHub.tsx` e `GameLeaderboard.tsx`: eliminados os clãs fictícios ("Monte Sião", "Célula Graça e Paz · GRACA-2026 · 72%"), substituídos por grupos reais no Supabase (`getMyChurchGroups`, `createChurchGroup`, `joinChurchGroupByCode`, `leaveChurchGroup`), QR Code escaneável real offline via `qrcode`, posição real no rodapé (sem `"#0"` ou `"Top 15%"`) e modais inline para bloqueio/denúncia (sem `window.confirm`/`window.prompt`).
+  - `ProfileScreen.tsx`: medição real de armazenamento (`navigator.storage.estimate` + `caches`) e preferências reais de lembrete devocional.
+  - `WorldMap.tsx`, `GameDailyChallenge.tsx`, `RewardModal.tsx` e `ReadingPlans.tsx`: progresso real por mundo (`getWorldCompletion`), missão diária sincronizada com `getDailyQuestionsForDate()`, nível unificado em `250 XP` e navegação normalizada via `queueBibleReference()`.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (251 módulos transformados, PWA gerada com 78 entries em precache).
+  - Varredura `git grep` em `src/` e inspeção de `public/`: **Zero mockups**, zero URLs externas frágeis e zero componentes sandbox ativos.
+  - Suíte automatizada de lógica do jogo (`verify_game_logic.mjs`): aprovada sem regressões.
+- **Assinatura:** Antigravity AI Engine — 23 de Novembro de 2026, 15:00 (Africa/Maputo).

@@ -4,7 +4,7 @@
  * Fuso horário canônico: Africa/Maputo
  */
 
-export type GameMode = 'quiz' | 'true-false' | 'fill-blanks' | 'daily';
+export type GameMode = 'quiz' | 'true-false' | 'fill-blanks' | 'daily' | 'review';
 
 export type GameQuestionKind = 'multiple-choice' | 'true-false' | 'fill-blanks';
 
@@ -56,6 +56,14 @@ export interface CanonicalPhase {
   retentionReviewedAt?: string;
 }
 
+export interface RecoveryVariant {
+  kind: GameQuestionKind;
+  prompt: string;
+  options?: string[];
+  answers: string[];
+  explanation: string;
+}
+
 export interface GameQuestion {
   id: string;
   kind: GameQuestionKind;
@@ -67,6 +75,37 @@ export interface GameQuestion {
   hint: string;
   topic?: string;
   difficulty?: 'easy' | 'medium' | 'hard';
+  recoveryVariant?: RecoveryVariant;
+}
+
+/** ─── MÁQUINA DE ESTADOS DE RECUPERAÇÃO (LER -> COMPREENDER -> RECUPERAR) ─── */
+export type RecoveryStatus =
+  | 'not_available'
+  | 'reading_pending'
+  | 'reading_in_progress'
+  | 'reading_validated'
+  | 'recovery_question'
+  | 'recovered'
+  | 'failed';
+
+export interface RecoverySession {
+  attemptId: string;
+  questionId: string;
+  sourceReference: string;
+  targetBook: string;
+  targetChapter: number;
+  targetVerses: number[];
+  contextStartVerse: number;
+  contextEndVerse: number;
+  minReadSeconds: number;
+  status: RecoveryStatus;
+  readingStartedAt: number | null;
+  accumulatedVisibleTimeMs: number;
+  sawStartVerse: boolean;
+  sawEndVerse: boolean;
+  recoveryQuestion: GameQuestion | null;
+  lifeAwarded: boolean;
+  updatedAt: number;
 }
 
 /** ─── AS TRÊS TRILHAS SEPARADAS DE PROGRESSO ─── */
@@ -105,6 +144,7 @@ export const REWARD_RULES = {
   READ_SCRIPTURE_CONTEXT_XP: 5,
   MAX_DAILY_LEAGUE_TALENTS: 150, // Limite diário de talentos de ranking para evitar burnout
   MAX_SESSION_HEARTS: 5,
+  MAX_RECOVERIES_PER_LESSON: 2,
 } as const;
 
 /** ─── FILA DE REVISÃO ESPAÇADA (REVISAR PARA DOMINAR) ─── */
@@ -170,4 +210,3 @@ export interface ChurchGroup {
   weeklyGoalProgress: number; // e.g. 75%
   goalTargetDescription: string;
 }
-

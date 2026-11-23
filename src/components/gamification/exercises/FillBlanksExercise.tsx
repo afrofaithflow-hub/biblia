@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { GameQuestion } from '../../../types/gameContracts';
 import { gameSfx } from '../../../lib/gameSoundEffects';
-import { shuffleArray } from '../../../lib/gameSession';
+import { ensureWordBankHasRequiredAnswers } from '../../../lib/gameSession';
 
 interface FillBlanksExerciseProps {
   question: GameQuestion;
@@ -28,11 +28,11 @@ export const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
   }, [question.id, numBlanks]);
 
   const promptParts = question.prompt.split('___');
-  // Nunca expor a sequência correta no banco de palavras: cada questão recebe
-  // uma disposição aleatória estável durante a tentativa inteira.
+  // Garante que palavras repetidas nas respostas (ex: "Haja luz; e houve luz")
+  // tenham fichas suficientes no banco embaralhado de opções.
   const options = useMemo(
-    () => shuffleArray(question.options || []),
-    [question.id]
+    () => ensureWordBankHasRequiredAnswers(question.options, question.answers),
+    [question.id, question.options, question.answers]
   );
 
   const handleSelectWord = (word: string) => {
@@ -120,8 +120,8 @@ export const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
           <div className="flex flex-wrap gap-2">
             {options.map((word, wIdx) => {
               const countUsed = placedWords.filter((w) => w === word).length;
-              const countInOptions = options.filter((w) => w === word).length;
-              const isUsed = countUsed >= countInOptions;
+              const priorSameWordCount = options.slice(0, wIdx).filter((w) => w === word).length;
+              const isUsed = priorSameWordCount < countUsed;
 
               return (
                 <button
@@ -149,8 +149,8 @@ export const FillBlanksExercise: React.FC<FillBlanksExerciseProps> = ({
               disabled={!isReadyToVerify}
               className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 ${
                 isReadyToVerify
-                  ? 'bg-sacred-brand dark:bg-sacred-neon text-white dark:text-slate-950 hover:brightness-110 active:scale-95'
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                  ? 'bg-sacred-brand text-white hover:brightness-110 active:scale-[0.99]'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
               }`}
             >
               <span className="material-symbols-outlined text-sm">check</span>

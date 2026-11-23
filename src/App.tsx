@@ -24,8 +24,9 @@ import { ProfileScreen } from './components/profile/ProfileScreen';
 import { PricingModal } from './components/pricing/PricingModal';
 import { AuthModal } from './components/auth/AuthModal';
 import { Toast } from './components/shared/Toast';
-import { WebhookSimulatorDrawer } from './components/sandbox/WebhookSimulatorDrawer';
 import PWAInstallBanner from './components/pwa/PWAInstallBanner';
+import { translateAuthError } from './lib/authErrors';
+import { acceptInviteCode, joinChurchGroupByCode } from './lib/gameSocialService';
 
 /** Tab-level screens — sub-screens belong to their parent tab */
 const GAME_SUB_SCREENS = new Set([
@@ -162,7 +163,7 @@ const AppContent: React.FC = () => {
 
   const { isPricingModalOpen, closePricingModal } = useSubscription();
   const { isPlaying } = useAudio();
-  const { isAuthModalOpen, closeAuthModal } = useAuth();
+  const { isAuthModalOpen, closeAuthModal, user } = useAuth();
 
   const navigate = (screen: string) => {
     setPrevScreen(screenRef.current);
@@ -174,6 +175,61 @@ const AppContent: React.FC = () => {
     setToast({ message, icon });
     setTimeout(() => setToast(null), 2800);
   };
+
+  // Captura erros OAuth/Auth ou códigos de convite na URL no arranque
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
+      const errDesc = url.searchParams.get('error_description') || hashParams.get('error_description');
+      if (errDesc) {
+        showToast(translateAuthError(decodeURIComponent(errDesc.replace(/\+/g, ' '))), 'error');
+        url.searchParams.delete('error');
+        url.searchParams.delete('error_code');
+        url.searchParams.delete('error_description');
+        window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+        return;
+      }
+
+      const inviteQuery = url.searchParams.get('invite');
+      const pathMatch = url.pathname.match(/^\/convite\/([A-Za-z0-9_-]+)/i);
+      const inviteCode = (inviteQuery || pathMatch?.[1] || '').trim().toUpperCase();
+      if (inviteCode) {
+        window.localStorage.setItem('biblia_pending_invite_code', inviteCode);
+        url.searchParams.delete('invite');
+        const nextPath = pathMatch ? '/' : url.pathname;
+        window.history.replaceState({}, '', `${nextPath}${url.search}`);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Processa convite pendente assim que o utilizador estiver autenticado
+  useEffect(() => {
+    if (!user) return;
+    let code = '';
+    try {
+      code = (window.localStorage.getItem('biblia_pending_invite_code') || '').trim().toUpperCase();
+    } catch {
+      return;
+    }
+    if (!code) return;
+
+    try {
+      window.localStorage.removeItem('biblia_pending_invite_code');
+    } catch {}
+
+    const runInvite = code.startsWith('GRP-')
+      ? joinChurchGroupByCode(code)
+      : acceptInviteCode(code);
+
+    runInvite
+      .then((res) => {
+        showToast(res.message, res.success ? 'group_add' : 'info');
+      })
+      .catch(() => {});
+  }, [user?.id]);
 
   const activeTab = getActiveTab(currentScreen);
   const showBottomNav = !FULLSCREEN_MODES.has(currentScreen);
@@ -402,9 +458,6 @@ const AppContent: React.FC = () => {
           onClose={closeAuthModal}
           showToast={showToast}
         />
-
-        {/* Sandbox Webhook Simulator (Apenas Ambiente DEV) */}
-        {import.meta.env.DEV && <WebhookSimulatorDrawer />}
 
         {/* PWA Install Banner */}
         <PWAInstallBanner showToast={showToast} />

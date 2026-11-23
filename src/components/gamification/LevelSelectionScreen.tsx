@@ -35,8 +35,6 @@ function phaseToModalData(phase: CanonicalPhase, phases: CanonicalPhase[]) {
       phases[phase.phaseNumber]
         ? `Fase ${phase.phaseNumber + 1}: ${phases[phase.phaseNumber].title}`
         : 'Próximo Mundo',
-    coverImg:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAViOHingDmjXVbtCO-vpb-vSnrN_09QBjjXPNBg7t0fHT8Zg_Nbrn7z5jz4FoJ1cgg56muFWIiSlH8QcIwEQ8uS7t1uhmrr9LSTeW7Vw_-XYdH3edr7Ez_YOSmjphroa3iEfhT3Jepi5woyk_31k-jRzYTZeZ3yggaY_iENKc2dlsL8ZRuXAtUZvHsSstJyLALHC-qE-Q5GPR2wFxmuFoW8YvVFHphqUr04qklrTjVhpcLbuE4GE_xjMkI80_qhu3jcf8Mt85Qu_o',
   };
 }
 
@@ -104,13 +102,12 @@ export const LevelSelectionScreen: React.FC<LevelSelectionScreenProps> = ({
 
       {/* World Hero Section */}
       <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl mx-auto sm:px-4 sm:pt-4">
-        <div className="relative w-full h-[220px] sm:h-[240px] bg-sacred-deep overflow-hidden flex flex-col justify-end p-5 sm:rounded-3xl shadow-md">
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
-            style={{
-              backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAViOHingDmjXVbtCO-vpb-vSnrN_09QBjjXPNBg7t0fHT8Zg_Nbrn7z5jz4FoJ1cgg56muFWIiSlH8QcIwEQ8uS7t1uhmrr9LSTeW7Vw_-XYdH3edr7Ez_YOSmjphroa3iEfhT3Jepi5woyk_31k-jRzYTZeZ3yggaY_iENKc2dlsL8ZRuXAtUZvHsSstJyLALHC-qE-Q5GPR2wFxmuFoW8YvVFHphqUr04qklrTjVhpcLbuE4GE_xjMkI80_qhu3jcf8Mt85Qu_o')`,
-            }}
-          />
+        <div className="relative w-full h-[220px] sm:h-[240px] bg-gradient-to-br from-sacred-deep via-teal-900 to-amber-900/70 overflow-hidden flex flex-col justify-end p-5 sm:rounded-3xl shadow-md">
+          <div className="absolute right-6 top-6 opacity-15 pointer-events-none">
+            <span className="material-symbols-outlined text-[120px] text-amber-200" style={{ fontVariationSettings: "'FILL' 1" }}>
+              {world.icon}
+            </span>
+          </div>
           <div className="absolute inset-0 bg-gradient-to-t from-bg-canvas dark:from-dark-canvas via-bg-canvas/50 dark:via-dark-canvas/50 to-transparent" />
 
           <div className="relative z-10">
