@@ -1,8 +1,145 @@
 -- ==============================================================================
 -- BiblIA — Migração Canónica de Lançamento v1.0
--- Trigger automática de perfis em auth.users, proteção de plano e grupos reais
+-- Garante schema completo de perfis/grupos, trigger auth.users e RPCs sociais
 -- Fuso Horário Canônico: Africa/Maputo (UTC+2)
 -- ==============================================================================
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- 0. GARANTIR SCHEMA COMPLETO E IDEMPOTENTE DE public.profiles E GRUPOS
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
+  display_name TEXT DEFAULT 'Discípulo',
+  avatar_url TEXT,
+  plan_tier INT NOT NULL DEFAULT 0,
+  is_master_badge BOOLEAN NOT NULL DEFAULT FALSE,
+  xp INT NOT NULL DEFAULT 0,
+  streak_days INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS display_name TEXT DEFAULT 'Discípulo';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS plan_tier INT NOT NULL DEFAULT 0;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_master_badge BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS xp INT NOT NULL DEFAULT 0;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS streak_days INT NOT NULL DEFAULT 0;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "Profiles são visíveis publicamente" ON public.profiles;
+  CREATE POLICY "Profiles são visíveis publicamente"
+    ON public.profiles FOR SELECT
+    USING (true);
+
+  DROP POLICY IF EXISTS "Utilizador pode editar seu próprio perfil básico" ON public.profiles;
+  CREATE POLICY "Utilizador pode editar seu próprio perfil básico"
+    ON public.profiles FOR UPDATE
+    TO authenticated
+    USING (auth.uid() = id)
+    WITH CHECK (auth.uid() = id);
+END $$;
+
+CREATE TABLE IF NOT EXISTS public.church_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  group_code TEXT NOT NULL UNIQUE,
+  leader_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  motto TEXT DEFAULT 'Crescendo juntos na Palavra',
+  avatar_url TEXT,
+  weekly_goal_xp INT NOT NULL DEFAULT 1500,
+  current_weekly_xp INT NOT NULL DEFAULT 0,
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.church_group_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES public.church_groups(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('leader', 'admin', 'member')) DEFAULT 'member',
+  weekly_contribution_xp INT NOT NULL DEFAULT 0,
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_group_member UNIQUE (group_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_group_members_group ON public.church_group_members(group_id);
+CREATE INDEX IF NOT EXISTS idx_group_members_user ON public.church_group_members(user_id);
+
+ALTER TABLE public.church_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.church_group_members ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "Grupos visíveis para membros ou consulta pública" ON public.church_groups;
+  CREATE POLICY "Grupos visíveis para membros ou consulta pública"
+    ON public.church_groups FOR SELECT
+    USING (true);
+
+  DROP POLICY IF EXISTS "Líder gere o grupo" ON public.church_groups;
+  CREATE POLICY "Líder gere o grupo"
+    ON public.church_groups FOR UPDATE
+    TO authenticated
+    USING (auth.uid() = leader_id);
+
+  DROP POLICY IF EXISTS "Membros visualizam membros do grupo" ON public.church_group_members;
+  CREATE POLICY "Membros visualizam membros do grupo"
+    ON public.church_group_members FOR SELECT
+    USING (true);
+
+  DROP POLICY IF EXISTS "Utilizador gere própria filiação em grupo" ON public.church_group_members;
+  CREATE POLICY "Utilizador gere própria filiação em grupo"
+    ON public.church_group_members FOR ALL
+    TO authenticated
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+END $$;
+
+CREATE OR REPLACE FUNCTION public.join_church_group_by_code(p_code TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_group RECORD;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RETURN jsonb_build_object('status', 'error', 'message', 'Entre na sua conta para participar de um grupo.');
+  END IF;
+
+  SELECT * INTO v_group
+  FROM public.church_groups
+  WHERE group_code = upper(trim(COALESCE(p_code, '')));
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('status', 'error', 'message', 'Código de grupo não encontrado.');
+  END IF;
+
+  INSERT INTO public.church_group_members (group_id, user_id, role)
+  VALUES (v_group.id, v_user_id, 'member')
+  ON CONFLICT (group_id, user_id) DO NOTHING;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'group_id', v_group.id,
+    'group_name', v_group.name,
+    'message', 'Entrou no grupo ' || v_group.name || '!'
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.join_church_group_by_code(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.join_church_group_by_code(TEXT) TO authenticated;
 
 -- 1. FUNÇÃO E TRIGGER AUTOMÁTICA PARA CRIAÇÃO DE PERFIL EM SIGN UP (OAuth / OTP / Senha)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
