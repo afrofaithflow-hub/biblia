@@ -961,3 +961,14 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Varredura `git grep` em `src/` e inspeção de `public/`: **Zero mockups**, zero URLs externas frágeis e zero componentes sandbox ativos.
   - Suíte automatizada de lógica do jogo (`verify_game_logic.mjs`): aprovada sem regressões.
 - **Assinatura:** Antigravity AI Engine — 23 de Novembro de 2026, 15:00 (Africa/Maputo).
+
+
+
+### 23/11/2026 — 17:21 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Correção de Atualização Automática PWA no Mobile (implementado)
+- **App Shell Leve no Precache (`vite.config.ts`):**
+  - Alterado `globIgnores` para excluir `**/bible-*.js` do precache inicial do Service Worker e movidos os 66 livros bíblicos para runtime caching `CacheFirst` (`biblia-books-v1`, hash imutável Vite), evitando falhas de atualização em redes móveis por downloads de 5 MB a cada deploy.
+- **Auto-Reload e Update Check (`src/main.tsx`, `vercel.json`):**
+  - Configurado `injectRegister: null` no plugin PWA e registo manual controlado com `updateViaCache: 'none'`, evento `controllerchange` (recarregamento automático seguro quando o utilizador já tinha versão instalada) e verificação em `visibilitychange` + intervalo de 15 minutos.
+  - Adicionados cabeçalhos `max-age=0, must-revalidate` em `/`, `/index.html` e `/registerSW.js` no `vercel.json`.
+  - Adicionada ação **"Verificar & Atualizar App"** no modal de Armazenamento de `ProfileScreen.tsx`.
+- **Assinatura:** Antigravity AI Engine — 23 de Novembro de 2026, 17:21 (Africa/Maputo).

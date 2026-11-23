@@ -8,17 +8,29 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      injectRegister: null,
       filename: 'sw.js',
       manifest: false, // Usamos public/manifest.json dedicado e validado
       workbox: {
-        // App Shell: pré-cache dos scripts, folhas de estilo e ícones de produção
+        // App Shell leve (~10 ficheiros): pré-cache rápido para atualização instantânea no mobile
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
-        // Ignora imagens pesadas de mockups e protótipos de desenvolvimento
-        globIgnores: ['**/prototipos/**', '**/prototipos/*'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB para acomodar livros bíblicos em chunk
+        // Os 66 livros bíblicos ficam em runtime CacheFirst conforme lidos (sem travar atualizações)
+        globIgnores: ['**/bible-*.js'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         // ── Estratégias de runtime caching para offline-first ──
         runtimeCaching: [
+          // Chunks dos 66 livros bíblicos (hash imutável Vite) → CacheFirst sob demanda
+          {
+            urlPattern: /\/assets\/bible-.*\.js$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'biblia-books-v1',
+              expiration: {
+                maxEntries: 80,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 ano
+              },
+            },
+          },
           // Supabase API → Network First (com timeout curto para respostas instantâneas)
           {
             urlPattern: /^https:\/\/[a-z0-9]+\.supabase\.co\/.*/i,
