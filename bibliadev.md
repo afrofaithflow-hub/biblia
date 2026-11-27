@@ -1230,3 +1230,12 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
 - **Verificações Executadas:**
   - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (262 módulos transformados, 0 erros TypeScript).
 - **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 13:30 (Africa/Maputo).
+
+### 27/11/2026 — 13:45 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Remoção Segura de Chave de API da Interface do Usuário (`AIAssistant.tsx`) (implementado)
+- **Eliminação de Exposição de Desenvolvedor:**
+  - Removido o botão de chave (`key`) do cabeçalho público do Assistente Bíblico.
+  - Excluído o modal `showApiKeyModal` que solicitava a inserção manual de API Keys aos utilizadores finais e continha notas de depuração interna.
+  - Atualizadas as mensagens de erro para comunicações profissionais voltadas ao utilizador final sem menção a credenciais ou canais de suporte técnico interno.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (262 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 13:45 (Africa/Maputo).
