@@ -1278,3 +1278,29 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
      - `src/lib/audioEngine.ts`: Corrigida a retoma de pausa para qualquer voz neural e sanitizados os handlers de troca instantânea de versículos e vozes.
 - **Validação:** Compilação de produção executada com sucesso (`tsc -b && vite build` em 6.83s, 16 entradas PWA geradas sem nenhum erro).
 - **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 15:00 (Africa/Maputo).
+
+
+---
+
+### [27/11/2026 - 20:20] MARCO OFICIAL: CONGELAMENTO DA VERSÃO BETA DE TESTES (ESTÁVEL E FUNCIONAL)
+- **Status do Projeto:** Congelado como **Versão Beta Estável e Funcional** (`v2.1.0-beta`).
+- **Escopo e Pilares Consolidados e Homologados:**
+  1. **Motor de Narração Bíblica de Alta Fidelidade (Edge Neural):**
+     - Voz oficial canônica: **Duarte** (`pt-PT-DuarteNeural`) como modelo primário e reverente.
+     - Vozes alternativas calibradas: **Antônio** (pt-BR), **Francisca** (pt-BR) e **Raquel** (pt-PT).
+     - Streaming HTTP MP3 direto em tempo real (sub-segundo) com instâncias mantidas aquecidas no servidor e cache automático offline no IndexedDB.
+     - Troca de vozes instantânea sem travamentos ou fallbacks para vozes robóticas legadas.
+     - 5 paisagens sonoras locais ativas (Ambiente suave, Notas leves, Pad sereno, Chuva, Brisa) com controle independente de volume.
+  2. **Estabilidade de Interface e Layout Fixo:**
+     - Header e Barra Inferior fixos e protegidos contra cortes em dispositivos móveis (`min-h-[66px] pb-[max(0.5rem,env(safe-area-inset-bottom))]`).
+     - Safe Area Insets respeitados para entalhes (notches) e barras de navegação do sistema Android/iOS.
+     - Modo escuro completo e coerente em todas as abas.
+  3. **Segurança e Contas de Usuário (Supabase Auth):**
+     - Credenciais públicas canônicas integradas no cliente, eliminando o erro de ambiente desconectado no mobile.
+     - URL Configuration ajustada no Supabase para suportar redirects seguros sem cair em `localhost:3000`.
+     - Suporte a perfil, progresso local e sincronização online.
+  4. **Assistente Teológico BiblIA:**
+     - Operacional com Gemini 2.5/3.5 Flash e prompt teológico reformado e reverente.
+     - Gestão determinística de cotas diárias e histórico local/remoto preservado.
+- **Próximas Fases Definidas pelo Usuário:** Aprimoramento, refinamento e amadurecimento progressivo, seguindo rigorosamente o fluxo: *Diagnosticar -> Amadurecer -> Sugerir -> Planejar -> Aguardar Aprovação Expressa antes de qualquer execução*.
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 20:20 (Africa/Maputo).
