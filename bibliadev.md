@@ -1337,3 +1337,19 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Substituído o identificador não reconhecido `"spark"` pelo ícone canônico do Google Material Symbols `"auto_awesome"` em `src/components/gamification/RewardModal.tsx`.
 - **Validação:** Compilação de produção aprovada com êxito (`tsc -b && vite build` em 11.72s, zero erros).
 - **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 22:30 (Africa/Maputo).
+
+
+---
+
+### [27/11/2026 - 23:25] IMPLEMENTAÇÃO DO PROXY SERVER-TO-SERVER (API ASSISTANT)
+- **Problema Abordado:** O navegador móvel bloqueava chamadas diretas ao Supabase via CORS com o erro *"Failed to send a request to the Edge Function"*, e a função canônica publicada no projeto era `bright-processor`.
+- **Implementação Realizada:**
+  1. `api/assistant.ts`:
+     - Implementado proxy seguro server-to-server que encaminha requisições com os cabeçalhos de autorização (`Authorization: Bearer <session.access_token>`) diretamente para a função `bright-processor` do Supabase.
+     - Como a chamada é feita de servidor (Node.js/Vercel) para servidor (Supabase), o navegador móvel não sofre restrição de CORS.
+     - Suporta também chave Gemini direta caso configurada no servidor Vercel.
+  2. `src/lib/assistantService.ts`:
+     - Chamada a `/api/assistant` envia o token de autenticação do usuário logado.
+     - Nome canônico padrão da função corrigido para `bright-processor`.
+- **Validação:** Compilação de produção aprovada com êxito (`tsc -b && vite build` em 7.32s, zero erros).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 23:25 (Africa/Maputo).

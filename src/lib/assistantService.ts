@@ -463,16 +463,46 @@ export async function askAssistant(
 
   // 2. Chamada ao endpoint serverless seguro /api/assistant (onde a chave GEMINI_API_KEY fica protegida no servidor)
   try {
+    const authHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (sessionData?.session?.access_token) {
+      authHeaders['Authorization'] = `Bearer ${sessionData.session.access_token}`;
+    }
+
     const apiRes = await fetch('/api/assistant', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({ question, readingContext, conversationId, history }),
     });
 
     if (apiRes.ok) {
       const apiData = await apiRes.json();
+      let parsed: any = null;
+
       if (apiData?.rawText) {
-        const parsed = parseAssistantJsonResponse(apiData.rawText);
+        parsed = parseAssistantJsonResponse(apiData.rawText);
+      } else if (apiData?.reply && typeof apiData.reply === 'object') {
+        parsed = {
+          answer: apiData.reply.answer || '',
+          kind: apiData.reply.kind || 'study',
+          references: apiData.reply.references || [],
+          suggestedQuestions: apiData.reply.suggestedQuestions || apiData.reply.suggested_questions || [],
+          interpretationNote: apiData.reply.interpretationNote,
+          safetyNote: apiData.reply.safetyNote,
+        };
+      } else if (apiData?.answer) {
+        parsed = {
+          answer: apiData.answer,
+          kind: apiData.kind || 'study',
+          references: apiData.references || [],
+          suggestedQuestions: apiData.suggestedQuestions || apiData.suggested_questions || [],
+          interpretationNote: apiData.interpretationNote,
+          safetyNote: apiData.safetyNote,
+        };
+      }
+
+      if (parsed && parsed.answer) {
         const convId = conversationId || `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
         // Persistência assíncrona no Supabase se autenticado
@@ -522,9 +552,9 @@ export async function askAssistant(
 
   // Nomes canónicos com fallback estrito apenas sob 404
   const envName = (import.meta.env.VITE_ASSISTANT_FUNCTION_NAME as string)?.trim();
-  const primaryFunctionName = envName || 'theological-assistant';
+  const primaryFunctionName = envName || 'bright-processor';
   const secondaryFunctionName =
-    primaryFunctionName === 'theological-assistant' ? 'bright-processor' : 'theological-assistant';
+    primaryFunctionName === 'bright-processor' ? 'theological-assistant' : 'bright-processor';
 
   let responseData: AssistantReply | null = null;
   let responseError: any = null;
