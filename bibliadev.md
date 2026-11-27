@@ -1239,3 +1239,24 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
 - **Verificações Executadas:**
   - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (262 módulos transformados, 0 erros TypeScript).
 - **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 13:45 (Africa/Maputo).
+
+### 27/11/2026 — 14:50 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Fixação de Layout Mobile & Motor Real Edge Neural com Voz Duarte (implementado)
+- **1. Fixação Estrutural de Layout no Mobile (`App.tsx`, `index.css`):**
+  - Travamento da casca do aplicativo em `fixed inset-0 flex flex-col w-full h-full overflow-hidden`, eliminando o afundamento e corte da barra inferior causado pela viewport dinâmica móvel (`100dvh`).
+  - Remoção do conflito de dimensões na barra inferior (`nav`), adotando `min-h-[66px] pb-[max(0.5rem,env(safe-area-inset-bottom))]` para visibilidade total e toque confortável de todos os 5 ícones e legendas.
+  - Fixação de `html, body, #root { height: 100%; width: 100%; overflow: hidden; margin: 0; padding: 0; }` no CSS base.
+- **2. Catálogo Exclusivo Edge Neural Real (`audioEngine.ts`, `AudioSettingsDrawer.tsx`):**
+  - Remoção de todas as vozes ElevenLabs e genéricas do sistema.
+  - Catálogo padronizado exclusivamente com os modelos oficiais da Microsoft:
+    - `pt-PT-DuarteNeural` (Duarte — Padrão Oficial Canônico, voz aprovada no teste do usuário).
+    - `pt-BR-AntonioNeural` (Antônio — Narrador Solene).
+    - `pt-BR-FranciscaNeural` (Francisca — Devocional Serena).
+    - `pt-PT-RaquelNeural` (Raquel — Contemplativa).
+- **3. Síntese e Streaming Neural Real (`edgeTtsService.ts`, `api/tts.ts`, `vite.config.ts`):**
+  - Integração do pacote `msedge-tts` com protocolo Edge WebSocket gerando áudio MP3 de alta fidelidade (24kHz/48kbps mono).
+  - Endpoint `/api/tts` implementado no Vite dev server e na rota serverless `api/tts.ts` para produção.
+  - Transmissão direta para elemento `<audio>` (`HTMLAudioElement`), eliminando por completo a voz mecânica/robótica do sintetizador nativo do celular (`window.speechSynthesis`).
+  - Cache em dois níveis: IndexedDB local (0ms em repetições) e Supabase Storage CDN para economia de dados móveis.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (262 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 14:50 (Africa/Maputo).

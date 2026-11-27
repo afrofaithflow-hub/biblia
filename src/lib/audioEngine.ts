@@ -11,11 +11,16 @@ import {
   DEFAULT_BIBLE_TRANSLATION_ID,
   getBibleTranslationLabel,
 } from '../data/bibleData';
-import { fetchVerseNeuralAudio } from './elevenlabsService';
+import { fetchEdgeNeuralAudio, EDGE_VOICES } from './edgeTtsService';
 
 export type AmbientSoundType = 'strings' | 'harp' | 'celestial' | 'rain' | 'nature' | 'none';
 
 export type VoiceProfileId =
+  | 'pt-PT-DuarteNeural'
+  | 'pt-BR-AntonioNeural'
+  | 'pt-BR-FranciscaNeural'
+  | 'pt-PT-RaquelNeural'
+  // Chaves legadas mantidas para retrocompatibilidade sem quebrar o estado salvo
   | 'edge_davi'
   | 'edge_ester'
   | 'edge_paulo'
@@ -23,11 +28,7 @@ export type VoiceProfileId =
   | 'eleven_davi'
   | 'eleven_ester'
   | 'eleven_paulo'
-  | 'eleven_timoteo'
-  | 'neural_davi_pt'
-  | 'neural_ester_pt'
-  | 'neural_paulo_pt'
-  | 'neural_timoteo_pt';
+  | 'eleven_timoteo';
 
 export interface VoiceProfile {
   id: VoiceProfileId;
@@ -36,77 +37,50 @@ export interface VoiceProfile {
   description: string;
   rate: number;
   isNeural?: boolean;
-  tier?: 'free' | 'pro';
+  tier?: 'free';
   systemVoiceHint?: string[];
 }
 
 export const AVAILABLE_VOICES: VoiceProfile[] = [
   {
-    id: 'edge_davi',
-    name: 'Davi (Voz Solene)',
-    role: 'Microsoft Edge Neural (Gratuito)',
-    description: 'Voz nobre, solene e equilibrada para leitura bíblica contínua.',
+    id: 'pt-PT-DuarteNeural',
+    name: 'Duarte (Padrão Oficial)',
+    role: 'Microsoft Edge Neural (Portugal)',
+    description: 'Voz masculina solene, firme e reverente. Modelo de estúdio oficial para leitura bíblica.',
     rate: 1.0,
     isNeural: true,
     tier: 'free',
-    systemVoiceHint: ['antonio', 'natural', 'pt-br', 'david'],
+    systemVoiceHint: ['duarte', 'natural', 'pt-pt'],
   },
   {
-    id: 'edge_ester',
-    name: 'Ester (Voz Serena)',
-    role: 'Microsoft Edge Neural (Gratuito)',
-    description: 'Voz suave, devocional e contemplativa para Salmos e Provérbios.',
+    id: 'pt-BR-AntonioNeural',
+    name: 'Antônio',
+    role: 'Microsoft Edge Neural (Brasil)',
+    description: 'Narrador masculino solene, nobre e compassado para passagens das Escrituras.',
+    rate: 1.0,
+    isNeural: true,
+    tier: 'free',
+    systemVoiceHint: ['antonio', 'natural', 'pt-br'],
+  },
+  {
+    id: 'pt-BR-FranciscaNeural',
+    name: 'Francisca',
+    role: 'Microsoft Edge Neural (Brasil)',
+    description: 'Voz feminina suave, clara e acolhedora para oração e Salmos.',
+    rate: 0.98,
+    isNeural: true,
+    tier: 'free',
+    systemVoiceHint: ['francisca', 'natural', 'pt-br'],
+  },
+  {
+    id: 'pt-PT-RaquelNeural',
+    name: 'Raquel',
+    role: 'Microsoft Edge Neural (Portugal)',
+    description: 'Dicção límpida, cadência pausada e expressiva para meditação diária.',
     rate: 0.95,
     isNeural: true,
     tier: 'free',
-    systemVoiceHint: ['francisca', 'natural', 'pt-br', 'maria'],
-  },
-  {
-    id: 'edge_paulo',
-    name: 'Paulo (Voz Apostólica)',
-    role: 'Microsoft Edge Neural (Gratuito)',
-    description: 'Voz articulada e eloquente, ideal para as Epístolas.',
-    rate: 1.02,
-    isNeural: true,
-    tier: 'free',
-    systemVoiceHint: ['duarte', 'natural', 'pt-pt', 'pt-br'],
-  },
-  {
-    id: 'edge_timoteo',
-    name: 'Timóteo (Voz Ponderada)',
-    role: 'Microsoft Edge Neural (Gratuito)',
-    description: 'Cadência compassada e reflexiva para estudo e meditação.',
-    rate: 0.9,
-    isNeural: true,
-    tier: 'free',
-    systemVoiceHint: ['raquel', 'natural', 'pt-pt', 'pt-br'],
-  },
-  {
-    id: 'eleven_davi',
-    name: 'Davi Ultra HD (ElevenLabs)',
-    role: 'Plano Pro / Master',
-    description: 'Narração de estúdio hiper-realista com máxima expressividade humana.',
-    rate: 1.0,
-    isNeural: true,
-    tier: 'pro',
-  },
-  {
-    id: 'eleven_ester',
-    name: 'Ester Ultra HD (ElevenLabs)',
-    role: 'Plano Pro / Master',
-    description: 'Voz de estúdio imersiva com entonação devocional avançada.',
-    rate: 0.95,
-    isNeural: true,
-    tier: 'pro',
-  },
-  {
-    id: 'neural_davi_pt',
-    name: 'Dispositivo (Econômico)',
-    role: 'Voz Local do Sistema',
-    description: 'Sintetizador nativo do sistema operacional sem consumo de rede.',
-    rate: 1.0,
-    isNeural: false,
-    tier: 'free',
+    systemVoiceHint: ['raquel', 'natural', 'pt-pt'],
   },
 ];
 
@@ -140,7 +114,7 @@ class AudioEngine {
   private isSpeaking: boolean = false;
   private isPaused: boolean = false;
   private currentSpeed: number = 1.0;
-  private currentVoiceId: VoiceProfileId = 'edge_davi';
+  private currentVoiceId: VoiceProfileId = 'pt-PT-DuarteNeural';
   private currentSystemVoiceURI = '';
   private speechVolume: number = 1.0;
   private cachedVoices: SpeechSynthesisVoice[] = [];
@@ -786,68 +760,66 @@ class AudioEngine {
     this.currentVerseIndex = targetIndex;
     this.callbacks.onVerseChange?.(targetIndex, verseText);
 
-    // ── 1. Tentativa com Narração Neural ElevenLabs ──
-    if (this.currentVoiceId.startsWith('eleven_')) {
-      const audioEl = this.getNeuralAudio();
-      if (audioEl) {
-        try {
-          const { url } = await fetchVerseNeuralAudio(verseText, {
+    // ── 1. Reprodução Neural de Alta Fidelidade com Edge TTS (Duarte, Francisca, etc.) ──
+    const audioEl = this.getNeuralAudio();
+    if (audioEl) {
+      try {
+        const { url } = await fetchEdgeNeuralAudio(verseText, {
+          translation: this.chapterData.translation || DEFAULT_BIBLE_TRANSLATION_ID,
+          book: this.chapterData.book,
+          chapter: this.chapterData.chapter,
+          verse: targetIndex + 1,
+          voiceId: this.currentVoiceId,
+        });
+
+        if (!this.isSpeaking || this.isPaused) return;
+
+        audioEl.src = url;
+        audioEl.playbackRate = this.currentSpeed;
+        audioEl.volume = this.speechVolume;
+
+        audioEl.onended = () => {
+          if (this.isSpeaking && !this.isPaused) {
+            this.callbacks.onVerseCompleted?.(targetIndex, verseText);
+            if (this.isLoopingVerse) {
+              setTimeout(() => {
+                if (this.isSpeaking && !this.isPaused) {
+                  void this.speakVerse(this.currentVerseIndex);
+                }
+              }, 700);
+            } else {
+              void this.speakVerse(this.currentVerseIndex + 1);
+            }
+          }
+        };
+
+        audioEl.onerror = () => {
+          console.warn('[audioEngine] Erro no áudio neural, usando fallback local.');
+          this.speakVerseFallbackLocal(targetIndex, verseText);
+        };
+
+        await audioEl.play();
+
+        // Pré-carrega o próximo versículo em segundo plano no cache IndexedDB
+        const nextIndex = targetIndex + 1;
+        if (nextIndex < this.chapterData.verses.length) {
+          const nextText = this.chapterData.verses[nextIndex];
+          void fetchEdgeNeuralAudio(nextText, {
             translation: this.chapterData.translation || DEFAULT_BIBLE_TRANSLATION_ID,
             book: this.chapterData.book,
             chapter: this.chapterData.chapter,
-            verse: targetIndex + 1,
+            verse: nextIndex + 1,
             voiceId: this.currentVoiceId,
-          });
-
-          if (!this.isSpeaking || this.isPaused) return;
-
-          audioEl.src = url;
-          audioEl.playbackRate = this.currentSpeed;
-          audioEl.volume = this.speechVolume;
-
-          audioEl.onended = () => {
-            if (this.isSpeaking && !this.isPaused) {
-              this.callbacks.onVerseCompleted?.(targetIndex, verseText);
-              if (this.isLoopingVerse) {
-                setTimeout(() => {
-                  if (this.isSpeaking && !this.isPaused) {
-                    void this.speakVerse(this.currentVerseIndex);
-                  }
-                }, 700);
-              } else {
-                void this.speakVerse(this.currentVerseIndex + 1);
-              }
-            }
-          };
-
-          audioEl.onerror = () => {
-            console.warn('[audioEngine] Erro no áudio neural, usando fallback local.');
-            this.speakVerseFallbackLocal(targetIndex, verseText);
-          };
-
-          await audioEl.play();
-
-          // Pré-carrega o próximo versículo em segundo plano no cache IndexedDB
-          const nextIndex = targetIndex + 1;
-          if (nextIndex < this.chapterData.verses.length) {
-            const nextText = this.chapterData.verses[nextIndex];
-            void fetchVerseNeuralAudio(nextText, {
-              translation: this.chapterData.translation || DEFAULT_BIBLE_TRANSLATION_ID,
-              book: this.chapterData.book,
-              chapter: this.chapterData.chapter,
-              verse: nextIndex + 1,
-              voiceId: this.currentVoiceId,
-            }).catch(() => {});
-          }
-
-          return;
-        } catch (err) {
-          console.warn('[audioEngine] Falha ao carregar áudio neural, usando fallback local:', err);
+          }).catch(() => {});
         }
+
+        return;
+      } catch (err) {
+        console.warn('[audioEngine] Falha ao carregar áudio neural Edge TTS, usando fallback local:', err);
       }
     }
 
-    // ── 2. Fallback Transparente para Síntese Nativa do Sistema ──
+    // ── 2. Fallback Transparente se estiver offline e sem cache ──
     this.speakVerseFallbackLocal(targetIndex, verseText);
   }
 
@@ -1000,7 +972,32 @@ class AudioEngine {
   }
 
   /** Pronúncia de texto avulso (jogos, quiz, perguntas da IA) */
-  public speakText(text: string): Promise<void> {
+  public async speakText(text: string): Promise<void> {
+    const audioEl = this.getNeuralAudio();
+    if (audioEl) {
+      try {
+        const cleanSnippet = text.slice(0, 600);
+        const pseudoVerse = Math.abs(cleanSnippet.slice(0, 40).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0));
+        const { url } = await fetchEdgeNeuralAudio(cleanSnippet, {
+          translation: 'ui',
+          book: 'app',
+          chapter: 1,
+          verse: pseudoVerse,
+          voiceId: this.currentVoiceId,
+        });
+        audioEl.src = url;
+        audioEl.playbackRate = this.currentSpeed;
+        audioEl.volume = this.speechVolume;
+        return new Promise((resolve) => {
+          audioEl.onended = () => resolve();
+          audioEl.onerror = () => resolve();
+          void audioEl.play().catch(() => resolve());
+        });
+      } catch {
+        // Fallback para síntese local se offline
+      }
+    }
+
     return new Promise((resolve) => {
       if (!this.isSpeechSupported()) {
         resolve();
@@ -1010,7 +1007,7 @@ class AudioEngine {
         const utterance = new SpeechSynthesisUtterance(text);
         const voices = this.getInstalledPortugueseVoices();
         const selectedVoice = voices.find((voice) => voice.voiceURI === this.currentSystemVoiceURI) || voices[0];
-        utterance.lang = selectedVoice?.lang || 'pt-BR';
+        utterance.lang = selectedVoice?.lang || 'pt-PT';
         if (selectedVoice) utterance.voice = selectedVoice;
         utterance.volume = 1.0;
         const style = AVAILABLE_VOICES.find((voice) => voice.id === this.currentVoiceId) || AVAILABLE_VOICES[0];

@@ -248,13 +248,13 @@ const AppContent: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col w-full h-[100dvh] min-h-[100dvh] bg-bg-canvas dark:bg-dark-canvas text-slate-900 dark:text-slate-100 font-display overflow-hidden transition-colors duration-300">
+    <div className="fixed inset-0 flex flex-col w-full h-full bg-bg-canvas dark:bg-dark-canvas text-slate-900 dark:text-slate-100 font-display overflow-hidden transition-colors duration-300">
       {/* Ambient background glow blobs */}
       <div className="fixed top-1/4 -left-16 w-80 h-80 bg-sacred-brand/5 dark:bg-sacred-neon/5 rounded-full blur-3xl pointer-events-none -z-0" />
       <div className="fixed bottom-1/4 -right-20 w-72 h-72 bg-gold-radiant/5 rounded-full blur-3xl pointer-events-none -z-0" />
 
       {/* Screen Content with animated transitions */}
-      <div className="flex-1 flex flex-col overflow-hidden relative w-full">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative w-full">
           <ScreenView screenKey={currentScreen}>
             {currentScreen === 'screen-home' && (
               <HomeScreen onNavigate={navigate} showToast={showToast} />
@@ -331,7 +331,7 @@ const AppContent: React.FC = () => {
         {showBottomNav && (
           <nav
             data-tutorial="bottom-navigation"
-            className="bg-white/95 dark:bg-[#081413]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-[#1a3330] pb-safe z-30 shrink-0 h-[72px] px-2 relative w-full transition-colors duration-300"
+            className="bg-white/95 dark:bg-[#081413]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-[#1a3330] z-30 shrink-0 min-h-[66px] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 px-2 relative w-full transition-colors duration-300"
           >
             <div className="max-w-md md:max-w-xl lg:max-w-2xl mx-auto w-full h-full">
               <ul className="flex justify-around items-center w-full h-full">

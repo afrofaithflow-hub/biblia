@@ -71,7 +71,7 @@ const DEFAULT_TRACK: AudioTrack = {
   subtitle: 'O Senhor é o meu pastor',
   quote: '',
   duration: 130,
-  voiceId: 'edge_davi',
+  voiceId: 'pt-PT-DuarteNeural',
   ambientId: 'strings',
 };
 
@@ -89,9 +89,12 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedVoice, setSelectedVoice] = useState<VoiceProfileId>(() => {
     if (typeof window !== 'undefined') {
       const saved = window.localStorage.getItem('biblia_audio_voice_id');
-      if (saved && !saved.startsWith('eleven_')) return saved as VoiceProfileId;
+      if (saved === 'pt-BR-AntonioNeural' || saved === 'edge_davi') return 'pt-BR-AntonioNeural';
+      if (saved === 'pt-BR-FranciscaNeural' || saved === 'edge_ester' || saved === 'eleven_ester') return 'pt-BR-FranciscaNeural';
+      if (saved === 'pt-PT-RaquelNeural' || saved === 'edge_timoteo') return 'pt-PT-RaquelNeural';
+      if (saved === 'pt-PT-DuarteNeural' || saved === 'edge_paulo') return 'pt-PT-DuarteNeural';
     }
-    return 'edge_davi';
+    return 'pt-PT-DuarteNeural';
   });
   const [selectedAmbient, setSelectedAmbient] = useState<AmbientSoundType>('strings');
   const [ambientVolume, setAmbientVolumeState] = useState(0.55);

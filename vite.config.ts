@@ -2,11 +2,12 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import type { IncomingMessage, ServerResponse } from 'http';
 
-function elevenLabsTtsPlugin(apiKey?: string) {
+function neuralTtsPlugin(elevenLabsKey?: string) {
   return {
-    name: 'elevenlabs-tts-server',
+    name: 'neural-tts-server',
     configureServer(server: any) {
       server.middlewares.use('/api/tts', (req: IncomingMessage, res: ServerResponse) => {
         if (req.method !== 'POST') {
@@ -25,7 +26,7 @@ function elevenLabsTtsPlugin(apiKey?: string) {
           try {
             const {
               text,
-              voiceId = 'JBFqnCBsd6RMkjVDRZzb',
+              voiceId = 'pt-PT-DuarteNeural',
               modelId = 'eleven_multilingual_v2',
             } = JSON.parse(body || '{}');
 
@@ -36,17 +37,33 @@ function elevenLabsTtsPlugin(apiKey?: string) {
               return;
             }
 
-            const activeKey = apiKey || process.env.ELEVENLABS_API_KEY;
-            if (!activeKey) {
-              res.statusCode = 503;
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify({ error: 'ELEVENLABS_API_KEY não configurada no servidor.' }));
+            // Normalização de voz para modelo Edge Neural
+            let targetVoice = voiceId;
+            if (targetVoice === 'edge_paulo' || targetVoice === 'edge_davi' || targetVoice === 'eleven_davi' || targetVoice === 'eleven_paulo') {
+              targetVoice = 'pt-PT-DuarteNeural';
+            } else if (targetVoice === 'edge_ester' || targetVoice === 'eleven_ester') {
+              targetVoice = 'pt-BR-FranciscaNeural';
+            } else if (targetVoice === 'edge_timoteo' || targetVoice === 'eleven_timoteo') {
+              targetVoice = 'pt-PT-RaquelNeural';
+            }
+
+            // Síntese prioritária via Microsoft Edge Neural (100% gratuito e alta fidelidade)
+            if (targetVoice.startsWith('pt-') || !elevenLabsKey) {
+              const tts = new MsEdgeTTS();
+              await tts.setMetadata(targetVoice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+              const { audioStream } = tts.toStream(text.slice(0, 3000));
+
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'audio/mpeg');
+              res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+              audioStream.pipe(res);
               return;
             }
 
-            const client = new ElevenLabsClient({ apiKey: activeKey });
+            // Fallback ElevenLabs se chave estiver explicitamente configurada
+            const client = new ElevenLabsClient({ apiKey: elevenLabsKey });
             const audioStream = await client.textToSpeech.convert(voiceId, {
-              text: text.slice(0, 2000), // Proteção de cota por requisição
+              text: text.slice(0, 2000),
               modelId,
               outputFormat: 'mp3_44100_128',
             });
@@ -86,7 +103,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
-      elevenLabsTtsPlugin(elevenLabsApiKey),
+      neuralTtsPlugin(elevenLabsApiKey),
       VitePWA({
       registerType: 'autoUpdate',
       injectRegister: null,

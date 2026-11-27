@@ -20,8 +20,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ onNavigate, showToast 
     playbackSpeed,
     selectedVoice,
     availableVoices,
-    selectedSystemVoiceURI,
-    installedSystemVoices,
     selectedAmbient,
     currentVerseIndex,
     currentVerseText,
@@ -118,9 +116,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ onNavigate, showToast 
     );
 
   const currentVoiceConfig = availableVoices.find((v) => v.id === selectedVoice);
-  const activeVoiceName = currentVoiceConfig
-    ? currentVoiceConfig.name
-    : installedSystemVoices.find((voice) => voice.voiceURI === selectedSystemVoiceURI)?.name || 'Voz do dispositivo';
+  const activeVoiceName = currentVoiceConfig ? currentVoiceConfig.name : 'Duarte';
 
   // Lista de Capítulos Devocionais Recomendados
   const featuredTracks = [
