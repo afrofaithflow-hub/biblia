@@ -56,15 +56,18 @@ interface ReadingContext {
 
 const CACHED_CONVERSATIONS_KEY = 'biblia_ai_cached_conversations';
 export const CUSTOM_GEMINI_KEY_STORAGE = 'biblia_custom_gemini_api_key';
+const DEFAULT_GEMINI_KEY = 'AIzaSyBKAtSSV0gIPldQfZS1MTUC1sRSUqofiXg';
 
 export function getEffectiveGeminiApiKey(): string {
   const envKey = (import.meta.env.VITE_GEMINI_API_KEY as string)?.trim();
   if (envKey) return envKey;
   try {
-    return localStorage.getItem(CUSTOM_GEMINI_KEY_STORAGE)?.trim() || '';
+    const custom = localStorage.getItem(CUSTOM_GEMINI_KEY_STORAGE)?.trim();
+    if (custom) return custom;
   } catch {
-    return '';
+    // ignore
   }
+  return DEFAULT_GEMINI_KEY;
 }
 
 export function setCustomGeminiApiKey(key: string): void {

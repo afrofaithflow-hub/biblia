@@ -5,31 +5,41 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import type { IncomingMessage, ServerResponse } from 'http';
 
+// Cache warm instances per voice model to eliminate repeated WebSocket handshakes in dev server
+const devTtsInstances = new Map<string, MsEdgeTTS>();
+
+async function getOrCreateDevTts(voice: string): Promise<MsEdgeTTS> {
+  let instance = devTtsInstances.get(voice);
+  if (!instance) {
+    instance = new MsEdgeTTS();
+    await instance.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+    devTtsInstances.set(voice, instance);
+  }
+  return instance;
+}
+
 function neuralTtsPlugin(elevenLabsKey?: string) {
   return {
     name: 'neural-tts-server',
     configureServer(server: any) {
-      server.middlewares.use('/api/tts', (req: IncomingMessage, res: ServerResponse) => {
-        if (req.method !== 'POST') {
+      server.middlewares.use('/api/tts', async (req: IncomingMessage, res: ServerResponse) => {
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 200;
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.end();
+          return;
+        }
+
+        if (req.method !== 'GET' && req.method !== 'POST') {
           res.statusCode = 405;
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ error: 'Method Not Allowed' }));
           return;
         }
 
-        let body = '';
-        req.on('data', (chunk: Buffer) => {
-          body += chunk.toString();
-        });
-
-        req.on('end', async () => {
+        const handleSynthesis = async (text: string, voiceId: string, modelId: string = 'eleven_multilingual_v2') => {
           try {
-            const {
-              text,
-              voiceId = 'pt-PT-DuarteNeural',
-              modelId = 'eleven_multilingual_v2',
-            } = JSON.parse(body || '{}');
-
             if (!text || typeof text !== 'string') {
               res.statusCode = 400;
               res.setHeader('Content-Type', 'application/json');
@@ -38,8 +48,13 @@ function neuralTtsPlugin(elevenLabsKey?: string) {
             }
 
             // Normalização de voz para modelo Edge Neural
-            let targetVoice = voiceId;
-            if (targetVoice === 'edge_paulo' || targetVoice === 'edge_davi' || targetVoice === 'eleven_davi' || targetVoice === 'eleven_paulo') {
+            let targetVoice = voiceId || 'pt-PT-DuarteNeural';
+            if (
+              targetVoice === 'edge_paulo' ||
+              targetVoice === 'edge_davi' ||
+              targetVoice === 'eleven_davi' ||
+              targetVoice === 'eleven_paulo'
+            ) {
               targetVoice = 'pt-PT-DuarteNeural';
             } else if (targetVoice === 'edge_ester' || targetVoice === 'eleven_ester') {
               targetVoice = 'pt-BR-FranciscaNeural';
@@ -49,14 +64,22 @@ function neuralTtsPlugin(elevenLabsKey?: string) {
 
             // Síntese prioritária via Microsoft Edge Neural (100% gratuito e alta fidelidade)
             if (targetVoice.startsWith('pt-') || !elevenLabsKey) {
-              const tts = new MsEdgeTTS();
-              await tts.setMetadata(targetVoice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
-              const { audioStream } = tts.toStream(text.slice(0, 3000));
+              let tts: MsEdgeTTS;
+              let streamData: any;
+              try {
+                tts = await getOrCreateDevTts(targetVoice);
+                streamData = tts.toStream(text.slice(0, 3000));
+              } catch {
+                tts = new MsEdgeTTS();
+                await tts.setMetadata(targetVoice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+                devTtsInstances.set(targetVoice, tts);
+                streamData = tts.toStream(text.slice(0, 3000));
+              }
 
               res.statusCode = 200;
               res.setHeader('Content-Type', 'audio/mpeg');
               res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-              audioStream.pipe(res);
+              streamData.audioStream.pipe(res);
               return;
             }
 
@@ -82,11 +105,35 @@ function neuralTtsPlugin(elevenLabsKey?: string) {
             }
             res.end();
           } catch (err: any) {
-            res.statusCode = 500;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ error: err?.message || 'Falha ao sintetizar áudio neural.' }));
+            if (!res.headersSent) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: err?.message || 'Falha ao sintetizar áudio neural.' }));
+            }
           }
-        });
+        };
+
+        if (req.method === 'GET') {
+          const urlObj = new URL(req.url || '', 'http://localhost');
+          const text = urlObj.searchParams.get('text') || '';
+          const voiceId = urlObj.searchParams.get('voiceId') || 'pt-PT-DuarteNeural';
+          await handleSynthesis(text, voiceId);
+        } else {
+          let body = '';
+          req.on('data', (chunk: Buffer) => {
+            body += chunk.toString();
+          });
+          req.on('end', async () => {
+            try {
+              const data = JSON.parse(body || '{}');
+              await handleSynthesis(data.text, data.voiceId, data.modelId);
+            } catch {
+              res.statusCode = 400;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ error: 'JSON inválido' }));
+            }
+          });
+        }
       });
     },
   };

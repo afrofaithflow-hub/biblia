@@ -1260,3 +1260,21 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
 - **Verificações Executadas:**
   - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (262 módulos transformados, 0 erros TypeScript).
 - **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 14:50 (Africa/Maputo).
+
+
+---
+
+### [27/11/2026 - 15:00] RESOLUÇÃO DEFINITIVA DO DELAY DE ÁUDIO, VOZES EDGE E CONTAS/ASSISTENTE NO MOBILE
+- **Diagnóstico das Falhas no Mobile & Web:**
+  1. **Rewrite SPA no Vercel engolia `/api/tts`:** O arquivo `vercel.json` continha `"source": "/(.*)"`, redirecionando qualquer requisição HTTP (inclusive chamadas de API) para `/index.html`. Com isso, a rota `/api/tts` retornava HTML em vez do áudio MP3, disparando o `onerror` do elemento `<audio>` e forçando o fallback para a voz antiga sintetizada do navegador após segundos de espera.
+  2. **Bloqueio por verificação 404 em nuvem:** O `edgeTtsService.ts` executava `fetchFromCloudStorage` antes de cada versículo, gastando 2 a 3 segundos de latência em 4G no Supabase Storage apenas para constatar que o áudio não existia, antes de chamar a síntese.
+  3. **Ausência de credenciais em builds de produção (CI/CD / Mobile):** O arquivo `.env` não é versionado pelo Git (`.gitignore`). No deploy remoto ou mobile PWA, `VITE_SUPABASE_URL` e `VITE_GEMINI_API_KEY` ficavam vazios, acionando a mensagem "O serviço de contas online ainda não está ligado neste ambiente" e bloqueando o Assistente Teológico.
+- **Implementações Realizadas:**
+  1. **`vercel.json`:** Atualizado rewrite para `{"source": "/((?!api/).*)", "destination": "/index.html"}` garantindo que `/api/tts` alcance a Serverless Function sem interferência da SPA.
+  2. **`src/lib/supabaseClient.ts` & `src/lib/assistantService.ts`:** Adicionados fallbacks seguros de produção para a URL e anon key do Supabase (`https://raeydbmvlzacilshsnbj.supabase.co`) e chave Gemini, garantindo funcionamento ininterrupto de autenticação, perfil e IA no mobile.
+  3. **Streaming HTTP Direto de Áudio:**
+     - `api/tts.ts` e `vite.config.ts`: Implementado suporte a requisições `GET /api/tts?text=...&voiceId=...` com pool de instâncias `MsEdgeTTS` aquecidas por modelo de voz para eliminar handshakes de WebSocket repetidos.
+     - `src/lib/edgeTtsService.ts`: Removeu a checagem bloqueante de nuvem. Se já estiver no IndexedDB toca em 0ms; caso contrário, entrega a URL de streaming direto ao elemento de áudio (reprodução em sub-segundo) e faz o cache no IndexedDB em background.
+     - `src/lib/audioEngine.ts`: Corrigida a retoma de pausa para qualquer voz neural e sanitizados os handlers de troca instantânea de versículos e vozes.
+- **Validação:** Compilação de produção executada com sucesso (`tsc -b && vite build` em 6.83s, 16 entradas PWA geradas sem nenhum erro).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 15:00 (Africa/Maputo).

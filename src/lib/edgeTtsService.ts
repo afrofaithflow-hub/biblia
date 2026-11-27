@@ -59,6 +59,23 @@ export const EDGE_VOICES: EdgeVoiceConfig[] = [
   },
 ];
 
+export function buildEdgeTtsStreamUrl(text: string, voiceId: string): string {
+  let targetVoice = voiceId || 'pt-PT-DuarteNeural';
+  if (
+    targetVoice === 'edge_paulo' ||
+    targetVoice === 'edge_davi' ||
+    targetVoice === 'eleven_davi' ||
+    targetVoice === 'eleven_paulo'
+  ) {
+    targetVoice = 'pt-PT-DuarteNeural';
+  } else if (targetVoice === 'edge_ester' || targetVoice === 'eleven_ester') {
+    targetVoice = 'pt-BR-FranciscaNeural';
+  } else if (targetVoice === 'edge_timoteo' || targetVoice === 'eleven_timoteo') {
+    targetVoice = 'pt-PT-RaquelNeural';
+  }
+  return `/api/tts?text=${encodeURIComponent(text.trim())}&voiceId=${encodeURIComponent(targetVoice)}`;
+}
+
 export async function fetchEdgeNeuralAudio(
   text: string,
   verseContext: {
@@ -68,7 +85,7 @@ export async function fetchEdgeNeuralAudio(
     verse: number;
     voiceId: string;
   }
-): Promise<{ url: string; source: 'cache' | 'network' }> {
+): Promise<{ url: string; source: 'cache' | 'stream' }> {
   // Normaliza identificadores antigos para modelos reais
   let voiceId = verseContext.voiceId || 'pt-PT-DuarteNeural';
   if (voiceId === 'edge_paulo' || voiceId === 'edge_davi' || voiceId === 'eleven_davi' || voiceId === 'eleven_paulo') {
@@ -86,61 +103,41 @@ export async function fetchEdgeNeuralAudio(
     verseContext.verse,
     voiceId
   );
-  const cloudPath = buildCloudStoragePath(
-    verseContext.translation,
-    verseContext.book,
-    verseContext.chapter,
-    verseContext.verse,
-    voiceId
-  );
 
   // 1. Nível 1: Cache Local (IndexedDB) — 0ms, 0 consumo de rede
-  const cachedBlob = await getCachedVerseAudio(cacheKey);
-  if (cachedBlob) {
-    return {
-      url: URL.createObjectURL(cachedBlob),
-      source: 'cache',
-    };
+  try {
+    const cachedBlob = await getCachedVerseAudio(cacheKey);
+    if (cachedBlob && cachedBlob.size > 500) {
+      return {
+        url: URL.createObjectURL(cachedBlob),
+        source: 'cache',
+      };
+    }
+  } catch {
+    // segue para streaming
   }
 
-  // 2. Nível 2: Cache na Nuvem Global (Supabase Storage CDN)
-  const cloudBlob = await fetchFromCloudStorage(cloudPath, cacheKey);
-  if (cloudBlob) {
-    return {
-      url: URL.createObjectURL(cloudBlob),
-      source: 'cache',
-    };
-  }
+  // 2. Nível 2: URL de Streaming Direto Imediato (sem bloquear em downloads ou checagens lentas de nuvem)
+  // O elemento de áudio inicia a reprodução do MP3 logo nos primeiros pacotes de áudio.
+  const streamUrl = buildEdgeTtsStreamUrl(text, voiceId);
 
-  // 3. Nível 3: Síntese Real via Serviço Edge TTS (MP3 de Estúdio)
-  const response = await fetch('/api/tts', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      text,
-      voiceId,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.error || `Falha ao sintetizar áudio com Edge Neural (HTTP ${response.status}).`
-    );
-  }
-
-  const audioBlob = await response.blob();
-
-  // Salva no IndexedDB local para repetições instantâneas offline
-  void saveCachedVerseAudio(cacheKey, audioBlob);
-
-  // Salva na nuvem Supabase CDN para a comunidade
-  void uploadToCloudStorage(cloudPath, audioBlob);
+  // Armazena no IndexedDB em segundo plano para futuras execuções 100% offline
+  void (async () => {
+    try {
+      const response = await fetch(streamUrl);
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        if (audioBlob && audioBlob.size > 500) {
+          await saveCachedVerseAudio(cacheKey, audioBlob);
+        }
+      }
+    } catch {
+      // Falha não-fatal de cache em background
+    }
+  })();
 
   return {
-    url: URL.createObjectURL(audioBlob),
-    source: 'network',
+    url: streamUrl,
+    source: 'stream',
   };
 }

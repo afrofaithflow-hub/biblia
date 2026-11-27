@@ -473,7 +473,7 @@ class AudioEngine {
     this.initAudioContext();
 
     if (this.isPaused) {
-      if (this.currentVoiceId.startsWith('eleven_') && this.neuralAudio && this.neuralAudio.src) {
+      if (this.neuralAudio && this.neuralAudio.src && !this.neuralAudio.ended) {
         try {
           void this.neuralAudio.play();
           this.isPaused = false;
@@ -774,6 +774,10 @@ class AudioEngine {
 
         if (!this.isSpeaking || this.isPaused) return;
 
+        // Limpa handlers prévios antes de associar novo áudio
+        audioEl.onended = null;
+        audioEl.onerror = null;
+
         audioEl.src = url;
         audioEl.playbackRate = this.currentSpeed;
         audioEl.volume = this.speechVolume;
@@ -793,8 +797,8 @@ class AudioEngine {
           }
         };
 
-        audioEl.onerror = () => {
-          console.warn('[audioEngine] Erro no áudio neural, usando fallback local.');
+        audioEl.onerror = (e) => {
+          console.warn('[audioEngine] Erro no áudio neural, usando fallback local:', e);
           this.speakVerseFallbackLocal(targetIndex, verseText);
         };
 
