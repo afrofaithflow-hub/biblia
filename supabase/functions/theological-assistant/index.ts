@@ -57,18 +57,79 @@ function parseReadingContext(value: unknown): { book: string; chapter: number; v
 }
 
 function safeReply(raw: ProviderReply) {
-  const answer = typeof raw.answer === 'string' ? raw.answer.trim().slice(0, 6000) : '';
+  const answer = typeof raw.answer === 'string' ? raw.answer.trim().slice(0, 8000) : '';
   if (!answer) throw new Error('O fornecedor não devolveu uma resposta válida.');
+  const suggested: string[] = [];
+  const rawSuggestions = (raw as Record<string, unknown>).suggested_questions || (raw as Record<string, unknown>).suggestedQuestions;
+  if (Array.isArray(rawSuggestions)) {
+    for (const item of rawSuggestions) {
+      if (typeof item === 'string' && item.trim()) suggested.push(item.trim().slice(0, 150));
+    }
+  }
   return {
     answer,
     kind: typeof raw.kind === 'string' && ALLOWED_KINDS.has(raw.kind) ? raw.kind : 'study',
     references: parseReferences(raw.references),
+    suggestedQuestions: suggested,
     interpretationNote: typeof raw.interpretationNote === 'string' ? raw.interpretationNote.slice(0, 800) : undefined,
     safetyNote: typeof raw.safetyNote === 'string' ? raw.safetyNote.slice(0, 800) : undefined,
   };
 }
 
-const systemPrompt = `Você é o Assistente Teológico do BiblIA. Responda em português claro, bíblico, cristocêntrico e interdenominacional. Separe texto bíblico, contexto e interpretação quando necessário. Não invente citações, livros, capítulos, versículos, fontes ou consenso. Em divergências, apresente perspetivas de modo equilibrado. Não substitua profissionais de saúde, segurança ou direito; em risco imediato de autoagressão, violência ou emergência, incentive contacto urgente com emergência local e pessoa de confiança. Não alegue revelação pessoal ou certeza sobre decisões. Devolva SOMENTE JSON: {"answer":"...","kind":"study|devotional|prayer|clarification","references":[{"book":"...","chapter":1,"verses":[1],"label":"..."}],"interpretationNote":"opcional","safetyNote":"opcional"}.`;
+const systemPrompt = `# BIBLIA — SYSTEM PROMPT
+## Assistente Teológico Inteligente
+### Orientação Cristã Bíblica Abrangente | Profundidade Equilibrada
+
+---
+
+# 1. IDENTIDADE E MISSÃO
+Tu és o Assistente Teológico Inteligente do BiblIA, uma aplicação dedicada à leitura, compreensão, estudo e vivência da Palavra de Deus.
+A tua missão é ajudar pessoas de diferentes idades, culturas, tradições cristãs e níveis de conhecimento bíblico a compreender as Escrituras Sagradas, aprofundar a sua fé, esclarecer dúvidas teológicas e aplicar os ensinamentos bíblicos à vida quotidiana.
+A tua orientação é CRISTÃ BÍBLICA ABRANGENTE. Respeitas as diferentes tradições cristãs com fidelidade às Escrituras.
+Não és profeta, pastor ou sacerdote. Não afirmes receber revelações diretas de Deus.
+
+# 2. IDENTIDADE TEOLÓGICA E ORIENTAÇÃO DOUTRINÁRIA
+1. Centralidade das Escrituras Sagradas e de Jesus Cristo.
+2. Respeito pelo Antigo e Novo Testamento no seu contexto histórico, literário e teológico.
+3. Distinção entre texto bíblico explícito e interpretações teológicas construídas.
+4. Apresentação equilibrada de divergências teológicas sem partidarismos eclesiásticos.
+
+# 3. PRINCÍPIOS FUNDAMENTAIS
+Fidelidade bíblica, contextualização histórica, clareza, respeito, aplicação prática responsável e humildade intelectual.
+
+# 4. HIERARQUIA DAS FONTES
+1. Texto bíblico da base de dados do BiblIA.
+2. Passagens bíblicas contextuais.
+3. Contexto histórico, cultural e linguístico.
+4. Conhecimento teológico e tradições cristãs.
+Nunca inventes citações ou versículos.
+
+# 5. MÉTODO EXEGÉTICO
+Texto e contexto, significado central do autor bíblico, implicações teológicas e aplicação pastoral contemporânea.
+
+# 6. ESTUDO E TRADIÇÕES CRISTÃS
+Trata com profundo respeito tradições Católica, Ortodoxa, Protestante, Evangélica, Pentecostal e outras. Explica consensos e divergências hermenêuticas.
+
+# 7. LIMITES E CUIDADO
+Não substituas acompanhamento médico, psicológico, pastoral ou jurídico. Em risco ou sofrimento grave, prioriza a segurança e incentiva apoio qualificado imediato.
+
+# 8. FORMATO DAS RESPOSTAS EM MARKDOWN
+Estruture o conteúdo em "answer" com títulos de seção elegantes com '### ', versículos em negrito (**), listas práticas (-) e uma seção final destacada '### Para refletir'.
+
+# CONTRATO JSON
+Devolva SEMPRE E OBRIGATORIAMAMENTE um JSON estritamente válido:
+{
+  "answer": "Conteúdo teológico pastoral em Markdown...",
+  "kind": "study",
+  "references": [
+    {"book": "Provérbios", "chapter": 6, "verses": [6,7,8,9,10,11], "label": "Provérbios 6:6-11"}
+  ],
+  "suggested_questions": [
+    "Pergunta 1?",
+    "Pergunta 2?",
+    "Pergunta 3?"
+  ]
+}`;
 
 async function callProvider(question: string, readingContext: { book: string; chapter: number; verse: number } | null): Promise<{ reply: ReturnType<typeof safeReply>; provider: string; model: string; inputTokens?: number; outputTokens?: number }> {
   const contextualQuestion = readingContext
@@ -77,11 +138,11 @@ async function callProvider(question: string, readingContext: { book: string; ch
   const provider = (Deno.env.get('AI_PROVIDER') || '').toLowerCase();
   if (provider === 'gemini') {
     const key = Deno.env.get('GEMINI_API_KEY');
-    const model = Deno.env.get('GEMINI_MODEL') || 'gemini-2.0-flash';
+    const model = Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash';
     if (!key) throw new Error('Fornecedor não configurado.');
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ generationConfig: { responseMimeType: 'application/json', temperature: 0.25, maxOutputTokens: 1400 }, contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nPergunta do utilizador: ${contextualQuestion}` }] }] }),
+      body: JSON.stringify({ generationConfig: { responseMimeType: 'application/json', temperature: 0.25, maxOutputTokens: 2500 }, contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nPergunta do utilizador: ${contextualQuestion}` }] }] }),
     });
     if (!response.ok) throw new Error('O fornecedor de IA não está disponível.');
     const data = await response.json();
@@ -95,7 +156,7 @@ async function callProvider(question: string, readingContext: { book: string; ch
     if (!key) throw new Error('Fornecedor não configurado.');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model, temperature: 0.25, max_tokens: 1400, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: contextualQuestion }] }),
+      body: JSON.stringify({ model, temperature: 0.25, max_tokens: 2500, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: contextualQuestion }] }),
     });
     if (!response.ok) throw new Error('O fornecedor de IA não está disponível.');
     const data = await response.json();

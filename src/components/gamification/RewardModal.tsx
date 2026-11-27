@@ -43,7 +43,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-sacred-deep dark:bg-dark-canvas text-white p-6 justify-between items-center text-center animate-fade-in font-display relative">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0f2d27] dark:bg-[#0d2722] text-white p-6 justify-between items-center text-center animate-fade-in font-display relative">
       {/* Real celebratory confetti */}
       <Confetti active={true} />
 
@@ -123,7 +123,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({
         </div>
 
         {/* 3 Trilhas Canónicas Card */}
-        <div className="w-full bg-white/10 dark:bg-surface-dark/80 border border-white/15 rounded-2xl p-4 shadow-2xl relative overflow-hidden backdrop-blur-md mb-4 space-y-3">
+        <div className="w-full bg-[#15453f] border border-[#23685e] rounded-2xl p-4 shadow-2xl relative overflow-hidden mb-4 space-y-3">
           {/* Grid de 3 Recompensas */}
           <div className="grid grid-cols-3 gap-2 text-center">
             {/* XP da Caminhada */}

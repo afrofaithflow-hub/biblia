@@ -295,33 +295,57 @@ export const GameLessonHost: React.FC<GameLessonHostProps> = ({
               </button>
             </div>
 
-            {/* Centro: Contador de Tempo Centralizado */}
+            {/* Centro: Relógio Circular / Anel de Contagem Regressiva (Protótipo Canônico) */}
             <div className="flex flex-col items-center justify-center">
               {isTimerRunning || isAnswered || isRecoveryActive ? (
                 <div
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-black tabular-nums shadow-xs transition-all ${
-                    ttsPauseActive
-                      ? 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300'
-                      : timeLeft <= 5 && isTimerRunning
-                      ? 'border-rose-400 bg-rose-50 text-rose-600 dark:border-rose-700 dark:bg-rose-950/70 dark:text-rose-300 animate-pulse'
-                      : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300'
-                  }`}
+                  className="relative flex items-center justify-center size-11"
                   role="timer"
                   aria-label={`${timeLeft} segundos restantes`}
                 >
-                  <span className="material-symbols-outlined text-[15px]">
-                    {ttsPauseActive ? 'pause_circle' : 'timer'}
+                  {/* SVG Circular Progress Ring */}
+                  <svg className="size-full -rotate-90" viewBox="0 0 36 36">
+                    <circle
+                      cx="18"
+                      cy="18"
+                      r="15"
+                      className="stroke-slate-200 dark:stroke-slate-800"
+                      strokeWidth="3"
+                      fill="none"
+                    />
+                    <circle
+                      cx="18"
+                      cy="18"
+                      r="15"
+                      className={`transition-all duration-1000 ${
+                        ttsPauseActive
+                          ? 'stroke-sky-400'
+                          : timeLeft <= 5 && isTimerRunning
+                          ? 'stroke-rose-500 animate-pulse'
+                          : 'stroke-amber-500 dark:stroke-sacred-neon'
+                      }`}
+                      strokeWidth="3"
+                      strokeDasharray="94.2"
+                      strokeDashoffset={94.2 - (94.2 * Math.max(0, timeLeft)) / (activeTimeLimit || 20)}
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                  </svg>
+                  <span
+                    className={`absolute text-xs font-black font-mono tracking-tight ${
+                      ttsPauseActive
+                        ? 'text-sky-500'
+                        : timeLeft <= 5 && isTimerRunning
+                        ? 'text-rose-500 font-extrabold'
+                        : 'text-slate-800 dark:text-slate-100'
+                    }`}
+                  >
+                    {timeLeft}
                   </span>
-                  <span>{formatGameTime(timeLeft)}</span>
-                  {ttsPauseActive && (
-                    <span className="text-[9px] font-bold uppercase tracking-wide opacity-80">
-                      Áudio
-                    </span>
-                  )}
                 </div>
               ) : (
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-rose-500">
-                  Pausa na Lição
+                  Pausa
                 </span>
               )}
             </div>

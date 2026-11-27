@@ -27,6 +27,7 @@ import { Toast } from './components/shared/Toast';
 import PWAInstallBanner from './components/pwa/PWAInstallBanner';
 import { translateAuthError } from './lib/authErrors';
 import { acceptInviteCode, joinChurchGroupByCode } from './lib/gameSocialService';
+import { UserAvatar } from './components/common/UserAvatar';
 
 /** Tab-level screens — sub-screens belong to their parent tab */
 const GAME_SUB_SCREENS = new Set([
@@ -164,6 +165,7 @@ const AppContent: React.FC = () => {
   const { isPricingModalOpen, closePricingModal } = useSubscription();
   const { isPlaying } = useAudio();
   const { isAuthModalOpen, closeAuthModal, user } = useAuth();
+  const { profile } = useSubscription();
 
   const navigate = (screen: string) => {
     setPrevScreen(screenRef.current);
@@ -327,7 +329,10 @@ const AppContent: React.FC = () => {
 
         {/* ── Bottom Navigation Bar (Adaptativa Claro & Noturno com Safe Area) ── */}
         {showBottomNav && (
-          <nav className="bg-white/95 dark:bg-[#081413]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-[#1a3330] pb-safe z-30 shrink-0 h-[72px] px-2 relative w-full transition-colors duration-300">
+          <nav
+            data-tutorial="bottom-navigation"
+            className="bg-white/95 dark:bg-[#081413]/95 backdrop-blur-md border-t border-slate-200/80 dark:border-[#1a3330] pb-safe z-30 shrink-0 h-[72px] px-2 relative w-full transition-colors duration-300"
+          >
             <div className="max-w-md md:max-w-xl lg:max-w-2xl mx-auto w-full h-full">
               <ul className="flex justify-around items-center w-full h-full">
                 {/* 1. Início */}
@@ -418,23 +423,24 @@ const AppContent: React.FC = () => {
                   </button>
                 </li>
 
-                {/* 5. Perfil & Membresia */}
+                {/* 5. Orientador Espiritual IA */}
                 <li className="flex-1">
                   <button
-                    onClick={() => navigate('screen-perfil')}
-                    className={`w-full flex flex-col items-center justify-center gap-1 transition-colors ${
-                      activeTab === 'perfil'
+                    onClick={() => navigate('screen-ai')}
+                    className={`w-full flex flex-col items-center justify-center gap-1 transition-colors relative ${
+                      activeTab === 'ia'
                         ? 'text-sacred-brand dark:text-sacred-neon font-bold'
                         : 'text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                     }`}
+                    title="Orientador Espiritual & Assistente Teológico IA"
                   >
                     <span
                       className="material-symbols-outlined text-2xl"
-                      style={{ fontVariationSettings: activeTab === 'perfil' ? "'FILL' 1" : "'FILL' 0" }}
+                      style={{ fontVariationSettings: activeTab === 'ia' ? "'FILL' 1" : "'FILL' 0" }}
                     >
-                      person
+                      auto_awesome
                     </span>
-                    <span className="text-[11px] tracking-tight">Perfil</span>
+                    <span className="text-[11px] tracking-tight">Orientador</span>
                   </button>
                 </li>
               </ul>

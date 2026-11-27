@@ -14,6 +14,9 @@ export const AudioSettingsDrawer: React.FC<AudioSettingsDrawerProps> = ({
   showToast,
 }) => {
   const {
+    availableVoices,
+    selectedVoice,
+    setVoice,
     installedSystemVoices,
     selectedSystemVoiceURI,
     setSystemVoice,
@@ -59,24 +62,74 @@ export const AudioSettingsDrawer: React.FC<AudioSettingsDrawerProps> = ({
           </div>
         </div>
 
-        {/* ── VOZ INSTALADA ── */}
+        {/* ── VOZES NEURAIS ELEVENLABS & LOCAIS ── */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Voz de leitura
+              Voz de Leitura Bíblica
             </span>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              {selectedSystemVoice?.name || 'Voz padrão do dispositivo'}
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-sacred-brand/10 text-sacred-brand dark:bg-sacred-neon/15 dark:text-sacred-neon">
+              {availableVoices.find((v) => v.id === selectedVoice)?.name || 'Davi (Voz Solene)'}
             </span>
           </div>
-          {installedSystemVoices.length > 0 && (
+
+          <div className="space-y-1.5 mt-2">
+            {availableVoices.map((voice) => {
+              const isSelected = voice.id === selectedVoice;
+              return (
+                <div
+                  key={voice.id}
+                  onClick={() => {
+                    setVoice(voice.id);
+                    showToast(`Voz ativada: ${voice.name}`, 'record_voice_over');
+                  }}
+                  className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                    isSelected
+                      ? 'border-sacred-brand bg-sacred-brand/8 dark:border-sacred-neon dark:bg-sacred-neon/10'
+                      : 'border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {voice.name}
+                      </span>
+                      {voice.tier === 'pro' ? (
+                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-gradient-to-r from-amber-500 to-gold-radiant text-slate-950 shadow-xs">
+                          PRO HD
+                        </span>
+                      ) : voice.isNeural ? (
+                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-teal-500/20 text-teal-700 dark:text-sacred-neon border border-teal-500/30">
+                          GRATUITO • NEURAL
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                          LOCAL
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                      {voice.description}
+                    </p>
+                  </div>
+                  {isSelected && (
+                    <span className="material-symbols-outlined text-sacred-brand dark:text-sacred-neon text-lg ml-2 shrink-0">
+                      check_circle
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {selectedVoice.startsWith('neural_') && installedSystemVoices.length > 0 && (
             <label className="block mt-3 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-              Escolher voz instalada
+              Escolher voz nativa instalada
               <select
                 onChange={(event) => {
                   setSystemVoice(event.target.value);
                   const voice = installedSystemVoices.find((item) => item.voiceURI === event.target.value);
-                  showToast(`Voz ativada: ${voice?.name || 'automática'}`, 'record_voice_over');
+                  showToast(`Voz nativa: ${voice?.name || 'automática'}`, 'record_voice_over');
                 }}
                 value={selectedSystemVoiceURI}
                 className="mt-1 w-full rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-surface-dark-alt p-2.5 text-xs"
@@ -88,9 +141,6 @@ export const AudioSettingsDrawer: React.FC<AudioSettingsDrawerProps> = ({
               </select>
             </label>
           )}
-          <p className="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
-            A voz é fornecida pelo navegador ou sistema. A seleção preferida Hellena/Hélia é guardada neste dispositivo.
-          </p>
         </div>
 
         <div className="pt-2 border-t border-gray-100 dark:border-dark-border">

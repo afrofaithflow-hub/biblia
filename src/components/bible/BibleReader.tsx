@@ -518,7 +518,13 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onNavigate, showToast 
   const handleAskAITopic = () => {
     if (!selectedVerseObj) return;
     setIsActionSheetOpen(false);
-    showToast(`Consultando IA sobre ${currentBook} ${currentChapter}:${selectedVerseObj.num}...`, 'auto_awesome');
+    const promptText = `Explique o contexto histórico e espiritual de ${currentBook} ${currentChapter}:${selectedVerseObj.num}: "${selectedVerseObj.text}"`;
+    try {
+      sessionStorage.setItem('biblia_ai_pending_prompt', promptText);
+    } catch {
+      // ignore
+    }
+    showToast(`Consultando Orientador sobre ${currentBook} ${currentChapter}:${selectedVerseObj.num}...`, 'auto_awesome');
     onNavigate('screen-ai');
   };
 

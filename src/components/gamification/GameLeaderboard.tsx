@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { getUserProgressTracks } from '../../lib/gameSession';
 import { useAuth } from '../../context/AuthContext';
+import { UserAvatar } from '../common/UserAvatar';
 import {
   getFriendsList,
   getLeagueRanking,
@@ -309,13 +310,11 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
                 {ranking[1] && (
                   <div className="flex flex-col items-center">
                     <div className="relative">
-                      <div className="size-16 rounded-full border-2 border-slate-300 dark:border-slate-600 overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-xs text-slate-700 dark:text-slate-200">
-                        {ranking[1].avatarUrl ? (
-                          <img src={ranking[1].avatarUrl} alt={ranking[1].displayName} className="size-full object-cover" />
-                        ) : (
-                          ranking[1].displayName.charAt(0)
-                        )}
-                      </div>
+                      <UserAvatar
+                        avatarUrl={ranking[1].avatarUrl}
+                        displayName={ranking[1].displayName}
+                        size="lg"
+                      />
                       <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 rounded-full text-[10px] font-black bg-slate-600 text-white">#2</span>
                     </div>
                     <p className="text-xs font-bold mt-1.5 text-center truncate max-w-[80px]">{ranking[1].displayName}</p>
@@ -326,13 +325,12 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
                 {ranking[0] && (
                   <div className="flex flex-col items-center -translate-y-3">
                     <div className="relative">
-                      <div className="size-20 rounded-full border-4 border-gold-radiant overflow-hidden shadow-gold-glow animate-glow-pulse bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-sm text-slate-800 dark:text-slate-100">
-                        {ranking[0].avatarUrl ? (
-                          <img src={ranking[0].avatarUrl} alt={ranking[0].displayName} className="size-full object-cover" />
-                        ) : (
-                          ranking[0].displayName.charAt(0)
-                        )}
-                      </div>
+                      <UserAvatar
+                        avatarUrl={ranking[0].avatarUrl}
+                        displayName={ranking[0].displayName}
+                        size="lg"
+                        className="shadow-gold-glow animate-glow-pulse"
+                      />
                       <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 size-7 rounded-full bg-gold-radiant text-slate-950 flex items-center justify-center font-black text-xs shadow-gold-glow border-2 border-white dark:border-surface-dark">👑</span>
                     </div>
                     <p className="text-sm font-black mt-2 text-center truncate max-w-[100px]">{ranking[0].displayName}</p>
@@ -343,13 +341,11 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
                 {ranking[2] && (
                   <div className="flex flex-col items-center">
                     <div className="relative">
-                      <div className="size-16 rounded-full border-2 border-amber-700/60 overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-xs text-slate-700 dark:text-slate-200">
-                        {ranking[2].avatarUrl ? (
-                          <img src={ranking[2].avatarUrl} alt={ranking[2].displayName} className="size-full object-cover" />
-                        ) : (
-                          ranking[2].displayName.charAt(0)
-                        )}
-                      </div>
+                      <UserAvatar
+                        avatarUrl={ranking[2].avatarUrl}
+                        displayName={ranking[2].displayName}
+                        size="lg"
+                      />
                       <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 rounded-full text-[10px] font-black bg-amber-800 text-white">#3</span>
                     </div>
                     <p className="text-xs font-bold mt-1.5 text-center truncate max-w-[80px]">{ranking[2].displayName}</p>
@@ -366,13 +362,7 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
                   >
                     <div className="flex items-center gap-3">
                       <span className="w-5 text-center text-xs font-black text-slate-400">{item.rank}</span>
-                      {item.avatarUrl ? (
-                        <img src={item.avatarUrl} alt={item.displayName} className="size-10 rounded-full object-cover" />
-                      ) : (
-                        <div className="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-black text-xs text-slate-600 dark:text-slate-300">
-                          {item.displayName.charAt(0)}
-                        </div>
-                      )}
+                      <UserAvatar avatarUrl={item.avatarUrl} displayName={item.displayName} size="md" />
                       <div>
                         <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{item.displayName}</h4>
                         <p className="text-[10px] text-slate-400">Posição #{item.rank}</p>
@@ -403,13 +393,7 @@ export const GameLeaderboard: React.FC<GameLeaderboardProps> = ({ onNavigate, sh
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="size-10 rounded-full bg-sacred-brand/10 border border-sacred-brand/30 flex items-center justify-center font-bold text-sacred-brand text-sm">
-                        {friend.avatarUrl ? (
-                          <img src={friend.avatarUrl} alt={friend.displayName} className="size-full rounded-full object-cover" />
-                        ) : (
-                          friend.displayName.charAt(0)
-                        )}
-                      </div>
+                      <UserAvatar avatarUrl={friend.avatarUrl} displayName={friend.displayName} size="md" />
                       {friend.isMutual && (
                         <span className="absolute bottom-0 right-0 size-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-surface-dark" title="Amizade mútua ativa" />
                       )}

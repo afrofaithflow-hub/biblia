@@ -11,10 +11,19 @@ import {
   DEFAULT_BIBLE_TRANSLATION_ID,
   getBibleTranslationLabel,
 } from '../data/bibleData';
+import { fetchVerseNeuralAudio } from './elevenlabsService';
 
 export type AmbientSoundType = 'strings' | 'harp' | 'celestial' | 'rain' | 'nature' | 'none';
 
 export type VoiceProfileId =
+  | 'edge_davi'
+  | 'edge_ester'
+  | 'edge_paulo'
+  | 'edge_timoteo'
+  | 'eleven_davi'
+  | 'eleven_ester'
+  | 'eleven_paulo'
+  | 'eleven_timoteo'
   | 'neural_davi_pt'
   | 'neural_ester_pt'
   | 'neural_paulo_pt'
@@ -26,36 +35,78 @@ export interface VoiceProfile {
   role: string;
   description: string;
   rate: number;
+  isNeural?: boolean;
+  tier?: 'free' | 'pro';
+  systemVoiceHint?: string[];
 }
 
 export const AVAILABLE_VOICES: VoiceProfile[] = [
   {
-    id: 'neural_davi_pt',
-    name: 'Natural',
-    role: 'Ritmo equilibrado',
-    description: 'Voz nativa do dispositivo, sem mudança artificial de tom.',
+    id: 'edge_davi',
+    name: 'Davi (Voz Solene)',
+    role: 'Microsoft Edge Neural (Gratuito)',
+    description: 'Voz nobre, solene e equilibrada para leitura bíblica contínua.',
     rate: 1.0,
+    isNeural: true,
+    tier: 'free',
+    systemVoiceHint: ['antonio', 'natural', 'pt-br', 'david'],
   },
   {
-    id: 'neural_ester_pt',
-    name: 'Sereno',
-    role: 'Ritmo tranquilo',
-    description: 'Leitura ligeiramente mais lenta para reflexão.',
-    rate: 0.92,
+    id: 'edge_ester',
+    name: 'Ester (Voz Serena)',
+    role: 'Microsoft Edge Neural (Gratuito)',
+    description: 'Voz suave, devocional e contemplativa para Salmos e Provérbios.',
+    rate: 0.95,
+    isNeural: true,
+    tier: 'free',
+    systemVoiceHint: ['francisca', 'natural', 'pt-br', 'maria'],
   },
   {
-    id: 'neural_paulo_pt',
-    name: 'Fluido',
-    role: 'Ritmo contínuo',
-    description: 'Leitura um pouco mais rápida para acompanhar textos longos.',
-    rate: 1.05,
+    id: 'edge_paulo',
+    name: 'Paulo (Voz Apostólica)',
+    role: 'Microsoft Edge Neural (Gratuito)',
+    description: 'Voz articulada e eloquente, ideal para as Epístolas.',
+    rate: 1.02,
+    isNeural: true,
+    tier: 'free',
+    systemVoiceHint: ['duarte', 'natural', 'pt-pt', 'pt-br'],
   },
   {
-    id: 'neural_timoteo_pt',
-    name: 'Pausado',
-    role: 'Ritmo de estudo',
-    description: 'Cadência mais lenta para leitura acompanhada.',
-    rate: 0.86,
+    id: 'edge_timoteo',
+    name: 'Timóteo (Voz Ponderada)',
+    role: 'Microsoft Edge Neural (Gratuito)',
+    description: 'Cadência compassada e reflexiva para estudo e meditação.',
+    rate: 0.9,
+    isNeural: true,
+    tier: 'free',
+    systemVoiceHint: ['raquel', 'natural', 'pt-pt', 'pt-br'],
+  },
+  {
+    id: 'eleven_davi',
+    name: 'Davi Ultra HD (ElevenLabs)',
+    role: 'Plano Pro / Master',
+    description: 'Narração de estúdio hiper-realista com máxima expressividade humana.',
+    rate: 1.0,
+    isNeural: true,
+    tier: 'pro',
+  },
+  {
+    id: 'eleven_ester',
+    name: 'Ester Ultra HD (ElevenLabs)',
+    role: 'Plano Pro / Master',
+    description: 'Voz de estúdio imersiva com entonação devocional avançada.',
+    rate: 0.95,
+    isNeural: true,
+    tier: 'pro',
+  },
+  {
+    id: 'neural_davi_pt',
+    name: 'Dispositivo (Econômico)',
+    role: 'Voz Local do Sistema',
+    description: 'Sintetizador nativo do sistema operacional sem consumo de rede.',
+    rate: 1.0,
+    isNeural: false,
+    tier: 'free',
   },
 ];
 
@@ -89,10 +140,11 @@ class AudioEngine {
   private isSpeaking: boolean = false;
   private isPaused: boolean = false;
   private currentSpeed: number = 1.0;
-  private currentVoiceId: VoiceProfileId = 'neural_davi_pt';
+  private currentVoiceId: VoiceProfileId = 'edge_davi';
   private currentSystemVoiceURI = '';
   private speechVolume: number = 1.0;
   private cachedVoices: SpeechSynthesisVoice[] = [];
+  private neuralAudio: HTMLAudioElement | null = null;
 
   // Controle de segurança assíncrona anti-congelamento (Watchdog e Timers)
   private cancelSafetyTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -193,7 +245,7 @@ class AudioEngine {
   public setAmbientVolume(vol: number) {
     this.ambientVolume = Math.max(0, Math.min(1, vol));
     if (this.ambientGain && this.audioCtx) {
-      this.ambientGain.gain.setTargetAtTime(this.ambientVolume * 0.16, this.audioCtx.currentTime, 0.08);
+      this.ambientGain.gain.setTargetAtTime(this.ambientVolume * 0.48, this.audioCtx.currentTime, 0.08);
     }
   }
 
@@ -207,9 +259,12 @@ class AudioEngine {
 
     try {
       const ctx = this.initAudioContext();
+      if (ctx.state === 'suspended') {
+        void ctx.resume();
+      }
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
-      masterGain.gain.linearRampToValueAtTime(this.ambientVolume * 0.16, ctx.currentTime + 1.5);
+      masterGain.gain.linearRampToValueAtTime(this.ambientVolume * 0.48, ctx.currentTime + 1.2);
       masterGain.connect(ctx.destination);
       this.ambientGain = masterGain;
 
@@ -393,6 +448,16 @@ class AudioEngine {
     return this.chapterData.verses;
   }
 
+  private getNeuralAudio(): HTMLAudioElement | null {
+    if (typeof window === 'undefined') return null;
+    if (!this.neuralAudio) {
+      this.neuralAudio = new Audio();
+      this.neuralAudio.volume = this.speechVolume;
+      this.neuralAudio.playbackRate = this.currentSpeed;
+    }
+    return this.neuralAudio;
+  }
+
   /** Cancelamento assíncrono seguro que não bloqueia a fila do navegador */
   private safeCancelSpeech(onDone?: () => void) {
     if (this.cancelSafetyTimeout) {
@@ -402,6 +467,17 @@ class AudioEngine {
     if (this.speechWatchdogTimeout) {
       clearTimeout(this.speechWatchdogTimeout);
       this.speechWatchdogTimeout = null;
+    }
+
+    if (this.neuralAudio) {
+      try {
+        this.neuralAudio.pause();
+        this.neuralAudio.currentTime = 0;
+        this.neuralAudio.onended = null;
+        this.neuralAudio.onerror = null;
+      } catch {
+        // ignore
+      }
     }
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -422,19 +498,35 @@ class AudioEngine {
   public play() {
     this.initAudioContext();
 
-    if (this.isPaused && typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
-      try {
-        window.speechSynthesis.resume();
-        this.isPaused = false;
-        this.isSpeaking = true;
-        this.startTimer();
-        this.startAmbient();
-        this.startSleepTimerCountdown();
-        this.updateMediaSessionPlaybackState(true);
-        this.callbacks.onStateChange?.(true);
-        return;
-      } catch {
-        // Fallback caso resume falhe
+    if (this.isPaused) {
+      if (this.currentVoiceId.startsWith('eleven_') && this.neuralAudio && this.neuralAudio.src) {
+        try {
+          void this.neuralAudio.play();
+          this.isPaused = false;
+          this.isSpeaking = true;
+          this.startTimer();
+          this.startAmbient();
+          this.startSleepTimerCountdown();
+          this.updateMediaSessionPlaybackState(true);
+          this.callbacks.onStateChange?.(true);
+          return;
+        } catch {
+          // ignore
+        }
+      } else if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.paused) {
+        try {
+          window.speechSynthesis.resume();
+          this.isPaused = false;
+          this.isSpeaking = true;
+          this.startTimer();
+          this.startAmbient();
+          this.startSleepTimerCountdown();
+          this.updateMediaSessionPlaybackState(true);
+          this.callbacks.onStateChange?.(true);
+          return;
+        } catch {
+          // Fallback caso resume falhe
+        }
       }
     }
 
@@ -447,7 +539,7 @@ class AudioEngine {
 
     this.safeCancelSpeech(() => {
       if (this.isSpeaking && !this.isPaused) {
-        this.speakVerse(this.currentVerseIndex);
+        void this.speakVerse(this.currentVerseIndex);
       }
     });
 
@@ -457,6 +549,13 @@ class AudioEngine {
   public pause() {
     this.isPaused = true;
     this.isSpeaking = false;
+    if (this.neuralAudio) {
+      try {
+        this.neuralAudio.pause();
+      } catch {
+        // ignore
+      }
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.pause();
@@ -497,10 +596,13 @@ class AudioEngine {
 
   public setSpeed(speed: number) {
     this.currentSpeed = speed;
+    if (this.neuralAudio) {
+      this.neuralAudio.playbackRate = speed;
+    }
     if (this.isSpeaking && !this.isPaused) {
       this.safeCancelSpeech(() => {
         if (this.isSpeaking && !this.isPaused) {
-          this.speakVerse(this.currentVerseIndex);
+          void this.speakVerse(this.currentVerseIndex);
         }
       });
     }
@@ -511,7 +613,7 @@ class AudioEngine {
     if (this.isSpeaking && !this.isPaused) {
       this.safeCancelSpeech(() => {
         if (this.isSpeaking && !this.isPaused) {
-          this.speakVerse(this.currentVerseIndex);
+          void this.speakVerse(this.currentVerseIndex);
         }
       });
     }
@@ -519,6 +621,9 @@ class AudioEngine {
 
   public setSpeechVolume(volume: number) {
     this.speechVolume = Math.max(0, Math.min(1, volume));
+    if (this.neuralAudio) {
+      this.neuralAudio.volume = this.speechVolume;
+    }
   }
 
   public setSystemVoiceURI(uri: string) {
@@ -662,12 +767,10 @@ class AudioEngine {
     }
   }
 
-  private speakVerse(index: number) {
-    if (!this.isSpeechSupported()) return;
-
+  private async speakVerse(index: number) {
     if (index >= this.chapterData.verses.length) {
       if (this.isLoopingVerse) {
-        this.speakVerse(this.currentVerseIndex);
+        void this.speakVerse(this.currentVerseIndex);
         return;
       }
       if (this.sleepTimerMode === 'end_of_chapter') {
@@ -683,18 +786,103 @@ class AudioEngine {
     this.currentVerseIndex = targetIndex;
     this.callbacks.onVerseChange?.(targetIndex, verseText);
 
+    // ── 1. Tentativa com Narração Neural ElevenLabs ──
+    if (this.currentVoiceId.startsWith('eleven_')) {
+      const audioEl = this.getNeuralAudio();
+      if (audioEl) {
+        try {
+          const { url } = await fetchVerseNeuralAudio(verseText, {
+            translation: this.chapterData.translation || DEFAULT_BIBLE_TRANSLATION_ID,
+            book: this.chapterData.book,
+            chapter: this.chapterData.chapter,
+            verse: targetIndex + 1,
+            voiceId: this.currentVoiceId,
+          });
+
+          if (!this.isSpeaking || this.isPaused) return;
+
+          audioEl.src = url;
+          audioEl.playbackRate = this.currentSpeed;
+          audioEl.volume = this.speechVolume;
+
+          audioEl.onended = () => {
+            if (this.isSpeaking && !this.isPaused) {
+              this.callbacks.onVerseCompleted?.(targetIndex, verseText);
+              if (this.isLoopingVerse) {
+                setTimeout(() => {
+                  if (this.isSpeaking && !this.isPaused) {
+                    void this.speakVerse(this.currentVerseIndex);
+                  }
+                }, 700);
+              } else {
+                void this.speakVerse(this.currentVerseIndex + 1);
+              }
+            }
+          };
+
+          audioEl.onerror = () => {
+            console.warn('[audioEngine] Erro no áudio neural, usando fallback local.');
+            this.speakVerseFallbackLocal(targetIndex, verseText);
+          };
+
+          await audioEl.play();
+
+          // Pré-carrega o próximo versículo em segundo plano no cache IndexedDB
+          const nextIndex = targetIndex + 1;
+          if (nextIndex < this.chapterData.verses.length) {
+            const nextText = this.chapterData.verses[nextIndex];
+            void fetchVerseNeuralAudio(nextText, {
+              translation: this.chapterData.translation || DEFAULT_BIBLE_TRANSLATION_ID,
+              book: this.chapterData.book,
+              chapter: this.chapterData.chapter,
+              verse: nextIndex + 1,
+              voiceId: this.currentVoiceId,
+            }).catch(() => {});
+          }
+
+          return;
+        } catch (err) {
+          console.warn('[audioEngine] Falha ao carregar áudio neural, usando fallback local:', err);
+        }
+      }
+    }
+
+    // ── 2. Fallback Transparente para Síntese Nativa do Sistema ──
+    this.speakVerseFallbackLocal(targetIndex, verseText);
+  }
+
+  private speakVerseFallbackLocal(targetIndex: number, verseText: string) {
+    if (!this.isSpeechSupported()) return;
+
     const utterance = new SpeechSynthesisUtterance(verseText);
     const ptVoices = this.getInstalledPortugueseVoices();
-    const chosenVoice =
-      ptVoices.find((voice) => voice.voiceURI === this.currentSystemVoiceURI) ||
-      ptVoices.find((voice) => voice.lang.toLowerCase().startsWith('pt-br')) ||
-      ptVoices[0];
+    const profile = AVAILABLE_VOICES.find((voice) => voice.id === this.currentVoiceId) || AVAILABLE_VOICES[0];
+
+    // Tenta encontrar uma voz correspondente aos hints do perfil (ex: Edge Natural Antonio, Francisca, etc.)
+    let chosenVoice: SpeechSynthesisVoice | undefined;
+    if (this.currentSystemVoiceURI) {
+      chosenVoice = ptVoices.find((v) => v.voiceURI === this.currentSystemVoiceURI);
+    }
+    if (!chosenVoice && profile.systemVoiceHint && profile.systemVoiceHint.length > 0) {
+      for (const hint of profile.systemVoiceHint) {
+        const found = ptVoices.find((v) => v.name.toLowerCase().includes(hint.toLowerCase()) || v.voiceURI.toLowerCase().includes(hint.toLowerCase()));
+        if (found) {
+          chosenVoice = found;
+          break;
+        }
+      }
+    }
+    if (!chosenVoice) {
+      chosenVoice =
+        ptVoices.find((voice) => voice.name.toLowerCase().includes('natural') || voice.name.toLowerCase().includes('online')) ||
+        ptVoices.find((voice) => voice.lang.toLowerCase().startsWith('pt-br')) ||
+        ptVoices[0];
+    }
+
     utterance.lang = chosenVoice?.lang || 'pt-BR';
     if (chosenVoice) utterance.voice = chosenVoice;
     utterance.volume = this.speechVolume;
 
-    const profile = AVAILABLE_VOICES.find((voice) => voice.id === this.currentVoiceId) || AVAILABLE_VOICES[0];
-    // Preserve the natural pitch of the installed voice; only adjust reading pace.
     utterance.pitch = 1;
     utterance.rate = Math.max(0.65, Math.min(2.0, this.currentSpeed * profile.rate));
 
@@ -704,7 +892,6 @@ class AudioEngine {
     }
     this.speechWatchdogTimeout = setTimeout(() => {
       if (this.isSpeaking && !this.isPaused && window.speechSynthesis.speaking === false) {
-        // Tenta rearmar
         try {
           window.speechSynthesis.resume();
         } catch {
@@ -726,23 +913,22 @@ class AudioEngine {
         if (this.isLoopingVerse) {
           setTimeout(() => {
             if (this.isSpeaking && !this.isPaused) {
-              this.speakVerse(this.currentVerseIndex);
+              void this.speakVerse(this.currentVerseIndex);
             }
           }, 700);
         } else {
-          this.speakVerse(this.currentVerseIndex + 1);
+          void this.speakVerse(this.currentVerseIndex + 1);
         }
       }
     };
 
     utterance.onerror = (e) => {
-      // Eventos 'canceled' e 'interrupted' são esperados ao pular de versículo
       if ((e as any).error === 'canceled' || (e as any).error === 'interrupted') {
         return;
       }
       console.warn('SpeechSynthesis utterance error:', (e as any).error);
       if (this.isSpeaking && !this.isPaused) {
-        setTimeout(() => this.speakVerse(this.currentVerseIndex + 1), 1000);
+        setTimeout(() => void this.speakVerse(this.currentVerseIndex + 1), 1000);
       }
     };
 

@@ -71,7 +71,7 @@ const DEFAULT_TRACK: AudioTrack = {
   subtitle: 'O Senhor é o meu pastor',
   quote: '',
   duration: 130,
-  voiceId: 'neural_davi_pt',
+  voiceId: 'edge_davi',
   ambientId: 'strings',
 };
 
@@ -86,7 +86,13 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(130);
   const [playbackSpeed, setPlaybackSpeed] = useState(() => Number(window.localStorage.getItem('biblia_audio_speed')) || 1.0);
-  const [selectedVoice, setSelectedVoice] = useState<VoiceProfileId>('neural_davi_pt');
+  const [selectedVoice, setSelectedVoice] = useState<VoiceProfileId>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('biblia_audio_voice_id');
+      if (saved && !saved.startsWith('eleven_')) return saved as VoiceProfileId;
+    }
+    return 'edge_davi';
+  });
   const [selectedAmbient, setSelectedAmbient] = useState<AmbientSoundType>('strings');
   const [ambientVolume, setAmbientVolumeState] = useState(0.55);
   const [speechVolume, setSpeechVolumeState] = useState(() => Number(window.localStorage.getItem('biblia_audio_speech_volume')) || 1.0);

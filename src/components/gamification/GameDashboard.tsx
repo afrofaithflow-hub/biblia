@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSubscription } from '../../context/SubscriptionContext';
+import { useAuth } from '../../context/AuthContext';
 import { getUserProgressTracks, getReviewQueue } from '../../lib/gameSession';
 import { CANONICAL_WORLDS } from '../../data/canonicalGameData';
 import { getCurrentJourneyPhase, getJourneyPhases, getWorldCompletion } from '../../lib/gameJourney';
+import { TutorialSpotlight } from '../common/TutorialSpotlight';
+import { isTutorialCompleted, markTutorialCompleted, TUTORIAL_STEPS } from '../../lib/tutorialService';
 
 interface GameDashboardProps {
   onNavigate: (screen: string) => void;
@@ -11,8 +14,19 @@ interface GameDashboardProps {
 
 export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showToast }) => {
   const { profile } = useSubscription();
+  const { user } = useAuth();
   const tracks = getUserProgressTracks();
   const reviewQueue = getReviewQueue();
+  const [showGameTutorial, setShowGameTutorial] = useState(false);
+
+  useEffect(() => {
+    if (!isTutorialCompleted('game', user?.id)) {
+      const timer = setTimeout(() => {
+        setShowGameTutorial(true);
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [user?.id]);
 
   // Mundo e fase actuais
   const currentWorld = CANONICAL_WORLDS[0]; // futuramente: derivar do progresso
@@ -69,7 +83,10 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
           </button>
 
           {/* Talentos Semanais (real) */}
-          <div className="flex items-center bg-white dark:bg-dark-card-base rounded-full px-2.5 sm:px-3 py-1 shadow-sm border border-slate-200 dark:border-dark-border">
+          <div
+            data-tutorial="game-lives-header"
+            className="flex items-center bg-white dark:bg-dark-card-base rounded-full px-2.5 sm:px-3 py-1 shadow-sm border border-slate-200 dark:border-dark-border"
+          >
             <span
               className="material-symbols-outlined text-gold-radiant mr-1 text-[16px] sm:text-[18px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
@@ -132,6 +149,7 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
           </div>
         ) : (
           <div
+            data-tutorial="game-daily-quest"
             onClick={() => onNavigate('screen-desafio-diario')}
             className="flex items-center gap-3.5 bg-white dark:bg-surface-dark p-4 rounded-xl border border-orange-200 dark:border-orange-800/50 shadow-sm relative overflow-hidden cursor-pointer hover:border-orange-400 transition-colors"
           >
@@ -248,7 +266,7 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
           <div className="relative flex flex-col gap-4 pl-3">
             <div className="absolute left-[23px] top-4 bottom-8 w-0.5 border-l-2 border-dashed border-slate-300 dark:border-slate-700 -z-10" />
 
-            {journeyPhases.slice(0, 5).map((phase) => {
+            {journeyPhases.slice(0, 5).map((phase, phaseIdx) => {
               const isActive = phase.isUnlocked && !phase.isCompleted;
               const isDone = phase.isCompleted;
               const isLocked = !phase.isUnlocked;
@@ -256,6 +274,7 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
               return (
                 <div
                   key={phase.id}
+                  {...(phaseIdx === 0 ? { 'data-tutorial': 'game-first-node' } : {})}
                   className={`flex items-center gap-3.5 ${isLocked ? 'opacity-40' : ''}`}
                 >
                   <div
@@ -298,6 +317,20 @@ export const GameDashboard: React.FC<GameDashboardProps> = ({ onNavigate, showTo
           </div>
         </div>
       </main>
+
+      {/* Tutorial Guiado da Jornada e Jogo (Spotlight) */}
+      <TutorialSpotlight
+        steps={TUTORIAL_STEPS.game}
+        isActive={showGameTutorial}
+        onComplete={() => {
+          markTutorialCompleted('game', user?.id);
+          setShowGameTutorial(false);
+        }}
+        onSkip={() => {
+          markTutorialCompleted('game', user?.id);
+          setShowGameTutorial(false);
+        }}
+      />
     </div>
   );
 };

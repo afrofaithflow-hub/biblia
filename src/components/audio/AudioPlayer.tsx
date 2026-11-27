@@ -4,6 +4,7 @@ import { useSubscription } from '../../context/SubscriptionContext';
 import { BIBLE_BOOKS, getBibleTranslationLabel } from '../../data/bibleData';
 import { BookSelectorModal } from '../bible/BookSelectorModal';
 import { AudioSettingsDrawer } from './AudioSettingsDrawer';
+import { SacredOrb } from '../ai/SacredOrb';
 
 interface AudioPlayerProps {
   onNavigate: (screen: string) => void;
@@ -17,6 +18,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ onNavigate, showToast 
     currentTime,
     duration,
     playbackSpeed,
+    selectedVoice,
+    availableVoices,
     selectedSystemVoiceURI,
     installedSystemVoices,
     selectedAmbient,
@@ -114,7 +117,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ onNavigate, showToast 
       currentTrack.book
     );
 
-  const activeVoiceName = installedSystemVoices.find((voice) => voice.voiceURI === selectedSystemVoiceURI)?.name || 'Voz do dispositivo';
+  const currentVoiceConfig = availableVoices.find((v) => v.id === selectedVoice);
+  const activeVoiceName = currentVoiceConfig
+    ? currentVoiceConfig.name
+    : installedSystemVoices.find((voice) => voice.voiceURI === selectedSystemVoiceURI)?.name || 'Voz do dispositivo';
 
   // Lista de Capítulos Devocionais Recomendados
   const featuredTracks = [
@@ -257,7 +263,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ onNavigate, showToast 
       </header>
 
       {/* ── ÁREA PRINCIPAL DO PLAYER: FOCO TOTAL NA ESCRITURA ── */}
-      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 pt-2 pb-4 w-full max-w-md mx-auto">
+      <main className="flex-1 flex flex-col items-center px-4 sm:px-6 pt-1 pb-4 w-full max-w-md mx-auto">
         {/* Aviso de Incompatibilidade de Voz (Caso Raro em Browsers Legados) */}
         {!isSpeechSupported && (
           <div className="w-full mb-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 text-xs flex items-center gap-2">
@@ -266,9 +272,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ onNavigate, showToast 
           </div>
         )}
 
-        {/* Pílula Contextual Discreta do Testamento (Substituiu a imagem gigante de 192px) */}
-        <div className="w-full flex items-center justify-center mb-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sacred-brand/10 dark:bg-sacred-neon/15 text-sacred-brand dark:text-sacred-neon border border-sacred-brand/20 dark:border-sacred-neon/30 text-[11px] font-bold">
+        {/* Orbe Sagrada 3D Viva com Efeito de Fala / Respiração */}
+        <div className="flex flex-col items-center justify-center my-2 select-none">
+          <div className="relative flex items-center justify-center">
+            <SacredOrb state={isPlaying ? 'speaking' : 'idle'} size={145} />
+          </div>
+          <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sacred-brand/10 dark:bg-sacred-neon/15 text-sacred-brand dark:text-sacred-neon border border-sacred-brand/20 dark:border-sacred-neon/30 text-[11px] font-bold">
             <span className="material-symbols-outlined text-sm">auto_stories</span>
             <span>{isOldTestament ? 'Antigo Testamento' : 'Novo Testamento'}</span>
             <span className="size-1 rounded-full bg-sacred-brand dark:bg-sacred-neon opacity-60" />
@@ -278,57 +287,56 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ onNavigate, showToast 
           </div>
         </div>
 
-        {/* ── CONTAINER DE LEITURA BÍBLICA EXPANDIDO (Com Contexto Anterior e Próximo) ── */}
-        <div className="w-full flex-1 flex flex-col justify-center min-h-[190px] max-h-[300px] my-auto py-2 space-y-2">
-          {/* Versículo Anterior (Contexto Atenuado, Clicável para Retroceder) */}
+        {/* Título & Subtítulo Dinâmico do Capítulo */}
+        <div className="text-center my-1">
+          <h2 className="text-xl sm:text-2xl font-black font-serif text-slate-900 dark:text-white tracking-tight">
+            {currentTrack.book} {currentTrack.chapter}
+          </h2>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+            {currentTrack.subtitle}
+          </p>
+        </div>
+
+        {/* ── CONTAINER DE LEITURA BÍBLICA (Centralizado, Fluido & Sempre Nítido) ── */}
+        <div className="w-full flex-1 flex flex-col justify-center min-h-[140px] max-h-[220px] my-auto py-1 space-y-1.5 text-center">
+          {/* Versículo Anterior (Contexto suave) */}
           {prevVerseText && (
             <div
               onClick={prevVerse}
-              className="px-3 py-1.5 rounded-xl cursor-pointer opacity-40 hover:opacity-75 transition-opacity text-slate-500 dark:text-slate-400 group"
+              className="px-3 py-1 cursor-pointer opacity-40 hover:opacity-75 transition-opacity text-slate-500 dark:text-slate-400"
               title="Clique para voltar a este versículo"
             >
-              <p className="font-serif italic text-xs sm:text-sm line-clamp-2 leading-relaxed">
-                <span className="font-mono font-bold text-[10px] mr-1.5 opacity-70 group-hover:text-sacred-brand">
-                  v.{currentVerseIndex}
-                </span>
+              <p className="font-serif italic text-xs line-clamp-1">
+                <span className="font-mono font-bold text-[10px] mr-1">v.{currentVerseIndex}</span>
                 "{prevVerseText}"
               </p>
             </div>
           )}
 
-          {/* VERSÍCULO ATUAL EM LEITURA (Destaque Sagrado Iluminado) */}
-          <div className="relative w-full rounded-2xl border-l-4 border-sacred-brand dark:border-sacred-neon bg-sacred-brand/8 dark:bg-sacred-neon/12 pl-4 pr-3 py-4 shadow-xs transition-all duration-300">
-            {/* Indicador de reprodução ativa com ondas */}
-            <div className="flex items-center justify-between mb-2">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-sacred-brand/20 dark:bg-sacred-neon/25 text-sacred-brand dark:text-sacred-neon font-mono text-xs font-black">
-                <span
-                  className={`size-2 rounded-full ${
-                    isPlaying ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'
-                  }`}
-                />
+          {/* VERSÍCULO ATUAL EM LEITURA (Destaque Sagrado e Revelação Contínua) */}
+          <div className="relative w-full rounded-2xl bg-white/70 dark:bg-[#122320]/80 backdrop-blur-xs border border-sacred-brand/20 dark:border-sacred-neon/30 p-4 shadow-sm transition-all duration-300">
+            <div className="flex items-center justify-between mb-1.5 text-[10px] font-bold">
+              <span className="inline-flex items-center gap-1 text-sacred-brand dark:text-sacred-neon font-mono">
+                <span className={`size-1.5 rounded-full ${isPlaying ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`} />
                 v.{currentVerseIndex + 1}
               </span>
-              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                {activeVoiceName}
-              </span>
+              <span className="text-slate-400 font-medium">{activeVoiceName}</span>
             </div>
 
-            <blockquote className="font-serif text-lg sm:text-xl font-medium leading-relaxed text-slate-900 dark:text-amber-50 drop-shadow-xs">
+            <blockquote className="font-serif text-base sm:text-lg font-medium leading-relaxed text-slate-900 dark:text-amber-50">
               "{currentVerseText || currentTrack.quote}"
             </blockquote>
           </div>
 
-          {/* Versículo Seguinte (Contexto Atenuado, Clicável para Avançar) */}
+          {/* Versículo Seguinte (Contexto suave) */}
           {nextVerseText && (
             <div
               onClick={nextVerse}
-              className="px-3 py-1.5 rounded-xl cursor-pointer opacity-40 hover:opacity-75 transition-opacity text-slate-500 dark:text-slate-400 group"
+              className="px-3 py-1 cursor-pointer opacity-40 hover:opacity-75 transition-opacity text-slate-500 dark:text-slate-400"
               title="Clique para avançar para este versículo"
             >
-              <p className="font-serif italic text-xs sm:text-sm line-clamp-2 leading-relaxed">
-                <span className="font-mono font-bold text-[10px] mr-1.5 opacity-70 group-hover:text-sacred-brand">
-                  v.{currentVerseIndex + 2}
-                </span>
+              <p className="font-serif italic text-xs line-clamp-1">
+                <span className="font-mono font-bold text-[10px] mr-1">v.{currentVerseIndex + 2}</span>
                 "{nextVerseText}"
               </p>
             </div>

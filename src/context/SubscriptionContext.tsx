@@ -82,7 +82,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         display_name:
           profData?.display_name ||
           String(user.user_metadata?.display_name || user.email?.split('@')[0] || 'Discípulo'),
-        avatar_url: profData?.avatar_url || String(user.user_metadata?.avatar_url || ''),
+        avatar_url:
+          profData?.avatar_url ||
+          String(user.user_metadata?.avatar_url || user.user_metadata?.picture || ''),
         plan_tier: !profErr && profData ? ((profData.plan_tier as PlanTier) ?? 0) : 0,
         is_master_badge: !profErr && profData ? Boolean(profData.is_master_badge ?? profData.plan_tier === 2) : false,
         xp: !profErr && profData ? Number(profData.xp ?? 0) : 0,

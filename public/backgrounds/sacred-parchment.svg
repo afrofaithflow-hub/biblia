@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <defs>
+    <linearGradient id="parchmentBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#140f09"/>
+      <stop offset="30%" stop-color="#241a10"/>
+      <stop offset="70%" stop-color="#22180e"/>
+      <stop offset="100%" stop-color="#110c07"/>
+    </linearGradient>
+    <radialGradient id="candleGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#b45309" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1080" height="1350" fill="url(#parchmentBg)"/>
+  <rect width="1080" height="1350" fill="url(#candleGlow)"/>
+
+  <!-- Sacred Geometry / Ancient Seal in Center Background -->
+  <g stroke="#d4af37" stroke-width="1.2" opacity="0.12" fill="none">
+    <circle cx="540" cy="675" r="380"/>
+    <circle cx="540" cy="675" r="320"/>
+    <circle cx="540" cy="675" r="260"/>
+    <circle cx="540" cy="675" r="180"/>
+    <polygon points="540,355 817,835 263,835"/>
+    <polygon points="540,995 817,515 263,515"/>
+    <line x1="540" y1="295" x2="540" y2="1055"/>
+    <line x1="160" y1="675" x2="920" y2="675"/>
+  </g>
+
+  <!-- Ornate Corner Filigree -->
+  <g stroke="#d4af37" stroke-width="2" fill="none" opacity="0.45">
+    <path d="M70,140 L70,70 L140,70"/>
+    <circle cx="70" cy="70" r="5" fill="#d4af37"/>
+    <path d="M1010,140 L1010,70 L940,70"/>
+    <circle cx="1010" cy="70" r="5" fill="#d4af37"/>
+    <path d="M70,1210 L70,1280 L140,1280"/>
+    <circle cx="70" cy="1280" r="5" fill="#d4af37"/>
+    <path d="M1010,1210 L1010,1280 L940,1280"/>
+    <circle cx="1010" cy="1280" r="5" fill="#d4af37"/>
+  </g>
+</svg>

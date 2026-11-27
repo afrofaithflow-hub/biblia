@@ -4,6 +4,10 @@ import { useTheme, ThemeMode } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { getUserProgressTracks } from '../../lib/gameSession';
 import { getLocalUserDataSummary } from '../../lib/guestMigrationService';
+import { getEffectiveDisplayName } from '../../lib/userProfile';
+import { AvatarPickerModal, SPIRITUAL_AVATARS } from './AvatarPickerModal';
+import { UserAvatar } from '../common/UserAvatar';
+import { resetTutorial, TutorialModule } from '../../lib/tutorialService';
 
 interface ProfileScreenProps {
   onNavigate: (screen: string) => void;
@@ -53,6 +57,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
   const [editName, setEditName] = useState('');
   const [savingName, setSavingName] = useState(false);
 
+  // Modal Escolha de Avatar
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
+
   // Modal Armazenamento & Cache Real
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [storageUsageLabel, setStorageUsageLabel] = useState('A calcular...');
@@ -63,10 +72,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [reminder, setReminder] = useState<ReminderConfig>(loadReminderConfig);
 
-  const displayName =
-    String(user?.user_metadata?.display_name || profile.display_name || '').trim() ||
-    (user?.email ? user.email.split('@')[0] : 'Visitante');
+  const displayName = getEffectiveDisplayName(user, profile);
   const userEmail = user?.email || 'Progresso guardado neste dispositivo';
+
+  const currentAvatarUrl =
+    localAvatarUrl !== null
+      ? localAvatarUrl
+      : profile.avatar_url ||
+        String(user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '');
+  const spiritualPreset = SPIRITUAL_AVATARS.find((a) => a.url === currentAvatarUrl);
 
   const refreshStorageStats = async () => {
     try {
@@ -235,22 +249,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
           <div
             onClick={() => {
               if (user) {
-                setEditName(displayName);
-                setShowEditProfile(true);
+                setShowAvatarModal(true);
               } else {
                 openAuthModal('signin');
               }
             }}
             className="relative group cursor-pointer"
-            title={user ? 'Editar Nome de Perfil' : 'Conectar Conta'}
+            title={user ? 'Alterar foto de perfil ou avatar' : 'Conectar Conta'}
           >
-            <div className="p-1 rounded-full border-2 border-gold-radiant/60 dark:border-gold-radiant/40 shadow-sm">
-              <div className="size-24 rounded-full shadow-soft flex items-center justify-center bg-sacred-brand/15 text-sacred-brand dark:bg-slate-800 dark:text-sacred-neon font-black text-3xl">
-                {user ? displayName.charAt(0).toUpperCase() : <span className="material-symbols-outlined text-4xl">person</span>}
-              </div>
-            </div>
+            <UserAvatar
+              avatarUrl={currentAvatarUrl}
+              displayName={displayName}
+              size="xl"
+            />
             <div className="absolute bottom-1 right-1 bg-sacred-brand text-white rounded-full p-1.5 border-2 border-bg-canvas dark:border-dark-canvas flex items-center justify-center shadow-sm">
-              <span className="material-symbols-outlined text-[13px]">edit</span>
+              <span className="material-symbols-outlined text-[13px]">{user ? 'photo_camera' : 'edit'}</span>
             </div>
           </div>
 
@@ -283,6 +296,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
                   <span className="material-symbols-outlined text-[12px]">check_circle</span>
                   <span>Conta Sincronizada</span>
                 </div>
+                <button
+                  onClick={() => setShowAvatarModal(true)}
+                  className="text-[11px] font-bold text-sacred-brand dark:text-sacred-neon hover:underline"
+                >
+                  Trocar foto
+                </button>
+                <span className="text-slate-300 dark:text-slate-600">•</span>
                 <button
                   onClick={() => {
                     setEditName(displayName);
@@ -473,6 +493,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
               <span className="text-[11px] text-sacred-brand dark:text-sacred-neon font-bold">
                 {reminder.enabled ? reminder.time : 'Desativado'}
               </span>
+            </button>
+
+            <button
+              onClick={() => setShowTutorialModal(true)}
+              className="w-full p-3.5 flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-lg text-sacred-brand dark:text-sacred-neon">help</span>
+                <span>Rever Tutoriais do App</span>
+              </div>
+              <span className="material-symbols-outlined text-base text-slate-400">chevron_right</span>
             </button>
           </div>
         </section>
@@ -676,6 +707,124 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, showTo
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Modal Escolha de Foto e Avatar */}
+      <AvatarPickerModal
+        isOpen={showAvatarModal}
+        onClose={() => setShowAvatarModal(false)}
+        currentAvatarUrl={currentAvatarUrl}
+        displayName={displayName}
+        onAvatarSaved={(newUrl) => {
+          setLocalAvatarUrl(newUrl);
+        }}
+        showToast={showToast}
+      />
+
+      {/* Modal Rever Tutoriais */}
+      {showTutorialModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => setShowTutorialModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-white dark:bg-dark-card-base rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-dark-border space-y-4 text-left"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-sacred-brand dark:text-sacred-neon text-xl">
+                  help
+                </span>
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                  Rever Tutoriais Guiados
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTutorialModal(false)}
+                className="size-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Escolha qual área da aplicação deseja revisitar com o guia interativo em destaque:
+            </p>
+
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  resetTutorial('app', user?.id);
+                  setShowTutorialModal(false);
+                  onNavigate('screen-home');
+                  showToast('Tutorial da Tela Inicial reativado!', 'explore');
+                }}
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 hover:border-sacred-brand dark:hover:border-sacred-neon flex items-center justify-between group transition-all"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-sacred-brand dark:text-sacred-neon text-lg">
+                    home
+                  </span>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Tela Inicial (Home)</p>
+                    <p className="text-[10px] text-slate-400">Pão diário, navegação e constância</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-sm text-slate-400 group-hover:translate-x-0.5 transition-transform">
+                  arrow_forward
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  resetTutorial('game', user?.id);
+                  setShowTutorialModal(false);
+                  onNavigate('screen-game-dashboard');
+                  showToast('Tutorial da Jornada reativado!', 'sports_esports');
+                }}
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 hover:border-sacred-brand dark:hover:border-sacred-neon flex items-center justify-between group transition-all"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-amber-500 text-lg">
+                    sports_esports
+                  </span>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Jornada & Jogo Bíblico</p>
+                    <p className="text-[10px] text-slate-400">Trilha de fases, vidas e desafios</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-sm text-slate-400 group-hover:translate-x-0.5 transition-transform">
+                  arrow_forward
+                </span>
+              </button>
+
+              <button
+                onClick={() => {
+                  resetTutorial('ai', user?.id);
+                  setShowTutorialModal(false);
+                  onNavigate('screen-ai');
+                  showToast('Tutorial do Orientador IA reativado!', 'auto_awesome');
+                }}
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-white/10 hover:border-sacred-brand dark:hover:border-sacred-neon flex items-center justify-between group transition-all"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-teal-400 text-lg">
+                    auto_awesome
+                  </span>
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Orientador Teológico IA</p>
+                    <p className="text-[10px] text-slate-400">Orbe viva, diálogos bíblicos e quotas</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-sm text-slate-400 group-hover:translate-x-0.5 transition-transform">
+                  arrow_forward
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

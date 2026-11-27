@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <defs>
+    <linearGradient id="nightSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#02040a"/>
+      <stop offset="40%" stop-color="#070c18"/>
+      <stop offset="70%" stop-color="#0c1626"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </linearGradient>
+    <radialGradient id="nebulaPurple" cx="35%" cy="30%" r="45%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebulaTeal" cx="70%" cy="60%" r="40%">
+      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.2"/>
+      <stop offset="60%" stop-color="#06b6d4" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1080" height="1350" fill="url(#nightSky)"/>
+  <rect width="1080" height="1350" fill="url(#nebulaPurple)"/>
+  <rect width="1080" height="1350" fill="url(#nebulaTeal)"/>
+
+  <!-- Starry Field -->
+  <g fill="#ffffff">
+    <circle cx="95" cy="85" r="1.5" opacity="0.8"/>
+    <circle cx="210" cy="140" r="2.2" opacity="0.9"/>
+    <circle cx="340" cy="70" r="1.2" opacity="0.6"/>
+    <circle cx="490" cy="120" r="3" opacity="1"/>
+    <circle cx="620" cy="90" r="1.5" opacity="0.7"/>
+    <circle cx="780" cy="160" r="2" opacity="0.85"/>
+    <circle cx="890" cy="60" r="2.8" opacity="0.9"/>
+    <circle cx="980" cy="140" r="1.5" opacity="0.7"/>
+
+    <circle cx="150" cy="310" r="2" opacity="0.7"/>
+    <circle cx="280" cy="240" r="3.2" opacity="0.95"/>
+    <circle cx="420" cy="380" r="1.8" opacity="0.75"/>
+    <circle cx="580" cy="280" r="2.5" opacity="0.9"/>
+    <circle cx="730" cy="340" r="1.2" opacity="0.6"/>
+    <circle cx="860" cy="290" r="2.8" opacity="0.85"/>
+    <circle cx="990" cy="380" r="1.5" opacity="0.7"/>
+
+    <circle cx="80" cy="520" r="2.2" opacity="0.8"/>
+    <circle cx="240" cy="620" r="1.5" opacity="0.6"/>
+    <circle cx="390" cy="560" r="2.8" opacity="0.9"/>
+    <circle cx="690" cy="590" r="1.8" opacity="0.7"/>
+    <circle cx="840" cy="640" r="2" opacity="0.8"/>
+    <circle cx="950" cy="530" r="3" opacity="0.9"/>
+
+    <circle cx="180" cy="780" r="2" opacity="0.7"/>
+    <circle cx="310" cy="850" r="1.2" opacity="0.5"/>
+    <circle cx="520" cy="810" r="2.5" opacity="0.85"/>
+    <circle cx="760" cy="790" r="2" opacity="0.7"/>
+    <circle cx="900" cy="840" r="2.2" opacity="0.8"/>
+  </g>
+
+  <!-- Cross Star Sparkles ✦ -->
+  <g fill="#fef08a" opacity="0.85">
+    <path d="M490,110 L492,118 L500,120 L492,122 L490,130 L488,122 L480,120 L488,118 Z"/>
+    <path d="M280,230 L282,238 L290,240 L282,242 L280,250 L278,242 L270,240 L278,238 Z"/>
+    <path d="M890,50 L892,58 L900,60 L892,62 L890,70 L888,62 L880,60 L888,58 Z"/>
+  </g>
+
+  <!-- Subtle Horizon Silhouette -->
+  <path d="M-20,1200 Q280,1150 540,1180 T1100,1160 L1100,1350 L-20,1350 Z" fill="#020408" opacity="0.95"/>
+</svg>

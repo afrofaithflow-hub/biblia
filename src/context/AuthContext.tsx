@@ -40,6 +40,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: AuthError | Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: AuthError | Error | null }>;
   updateDisplayName: (displayName: string) => Promise<{ error: Error | null }>;
+  updateAvatarUrl: (avatarUrl: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,9 +54,14 @@ async function ensureUserProfile(authUser: User, explicitDisplayName?: string): 
 
   try {
     const cleanExplicitName = explicitDisplayName?.trim();
+    const derivedAvatar =
+      authUser.user_metadata?.avatar_url ||
+      authUser.user_metadata?.picture ||
+      null;
+
     const { data: existing, error: readErr } = await supabase
       .from('profiles')
-      .select('id, display_name')
+      .select('id, display_name, avatar_url')
       .eq('id', authUser.id)
       .maybeSingle();
 
@@ -73,13 +79,44 @@ async function ensureUserProfile(authUser: User, explicitDisplayName?: string): 
         id: authUser.id,
         email: authUser.email,
         display_name: derivedName,
-        avatar_url: authUser.user_metadata?.avatar_url || null,
+        avatar_url: derivedAvatar,
       });
-    } else if (cleanExplicitName && cleanExplicitName !== existing.display_name) {
-      await supabase
-        .from('profiles')
-        .update({ display_name: cleanExplicitName })
-        .eq('id', authUser.id);
+    } else {
+      const updates: Record<string, unknown> = {};
+      const identities = authUser.identities || [];
+      const identityData = (identities.length > 0 && identities[0]?.identity_data)
+        ? (identities[0].identity_data as Record<string, any>)
+        : {};
+      const metaFullName = String(
+        authUser.user_metadata?.full_name ||
+        authUser.user_metadata?.name ||
+        identityData.full_name ||
+        identityData.name ||
+        [authUser.user_metadata?.given_name || identityData.given_name, authUser.user_metadata?.family_name || identityData.family_name].filter(Boolean).join(' ') ||
+        ''
+      ).trim();
+
+      const emailPrefix = authUser.email?.split('@')[0]?.toLowerCase().trim();
+
+      if (cleanExplicitName && cleanExplicitName !== existing.display_name) {
+        updates.display_name = cleanExplicitName;
+      } else if (
+        metaFullName &&
+        (!existing.display_name || (emailPrefix && existing.display_name.toLowerCase() === emailPrefix))
+      ) {
+        // Atualiza display_name para o nome real do Google caso o banco tenha apenas o prefixo do email
+        updates.display_name = metaFullName;
+      }
+
+      if (!existing.avatar_url && derivedAvatar) {
+        updates.avatar_url = derivedAvatar;
+      }
+      if (Object.keys(updates).length > 0) {
+        await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', authUser.id);
+      }
     }
   } catch {
     // Falha não-fatal: o trigger handle_new_user no servidor garante integridade
@@ -302,6 +339,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null };
   };
 
+  const updateAvatarUrl = async (avatarUrl: string): Promise<{ error: Error | null }> => {
+    if (!isSupabaseConfigured || !user) {
+      return { error: new Error('Entre na sua conta para atualizar o avatar.') };
+    }
+
+    const { data: updatedAuth, error: authErr } = await supabase.auth.updateUser({
+      data: { avatar_url: avatarUrl, picture: avatarUrl },
+    });
+    if (authErr) {
+      return { error: authErr };
+    }
+    if (updatedAuth.user) {
+      setUser(updatedAuth.user);
+    }
+
+    const { error: profErr } = await supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', user.id);
+
+    if (profErr) {
+      return { error: new Error(profErr.message) };
+    }
+
+    return { error: null };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -324,6 +388,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetPassword,
         updatePassword,
         updateDisplayName,
+        updateAvatarUrl,
       }}
     >
       {children}

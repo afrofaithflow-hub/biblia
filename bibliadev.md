@@ -25,6 +25,10 @@
    - Código modular em `src/components/`, `src/context/`, `src/lib/`, `src/types/`.
    - Tipagem TypeScript estrita sem erros de compilação.
    - Estado global reativo sincronizado com persistência local e Supabase.
+5. **Protocolo Estrito de Governança & Decisão do Utilizador (REGRA DE OURO):**
+   - **Zero Edições Precipitadas:** Jamais realizar alterações instantâneas de código ou arquivos ao receber ideias, comentários ou reflexões do utilizador.
+   - **Amadurecimento Prévio Obrigatório:** Discutir, dialogar e amadurecer os conceitos antes de qualquer proposta prática.
+   - **Implementação Estritamente Sob Ordem Expressa:** Planos e alterações técnicas só devem ser implementados após comando/orientação clara e explícita do utilizador (ex: *"Avance"*, *"Implemente"*, *"Aprovado"*).
 
 ---
 
@@ -972,3 +976,257 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
   - Adicionados cabeçalhos `max-age=0, must-revalidate` em `/`, `/index.html` e `/registerSW.js` no `vercel.json`.
   - Adicionada ação **"Verificar & Atualizar App"** no modal de Armazenamento de `ProfileScreen.tsx`.
 - **Assinatura:** Antigravity AI Engine — 23 de Novembro de 2026, 17:21 (Africa/Maputo).
+
+
+### 25/11/2026 — 13:00 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Narração Neural ElevenLabs, Cache Offline & Redesign do Áudio (implementado)
+- **Narração Neural Humana ElevenLabs (`@elevenlabs/elevenlabs-js`, `vite.config.ts`, `elevenlabsService.ts`):**
+  - Integração do SDK oficial da ElevenLabs com middleware de servidor seguro em `/api/tts` (lendo `ELEVENLABS_API_KEY` do `.env.local` sem vazar a chave para o bundle do browser).
+  - 4 perfis de voz canônicos: Davi (Solene / George), Ester (Serena / Sarah), Paulo (Apostólico / Daniel) e Timóteo (Estudo / Liam).
+- **Cache Local de Áudio no IndexedDB (`src/lib/audioCacheService.ts`):**
+  - Armazenamento binário de cada versículo sintetizado (`biblia_audio_cache_db`), garantindo custo zero em repetições e suporte a audição offline.
+  - Pré-carregamento dinâmico em segundo plano do próximo versículo durante a reprodução para transição contínua.
+- **Motor de Áudio Híbrido & Resiliente (`src/lib/audioEngine.ts`):**
+  - Suporte unificado a reprodução de áudio neural via `HTMLAudioElement` e síntese de voz local via `SpeechSynthesis` como fallback transparente (caso offline ou limite de quota).
+  - Controle integrado de velocidade, volume independente de voz vs ambiência e cancelamento assíncrono anti-travamento.
+- **Gaveta de Configurações & Player Bíblico (`AudioSettingsDrawer.tsx`, `AudioPlayer.tsx`):**
+  - Seleção tátil entre vozes HD Neural e vozes locais econômicas com badges visuais.
+  - Exibição refinada da voz em reprodução no cartão de leitura bíblica.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (255 módulos transformados, 0 erros TypeScript).
+  - Validação do CLI ElevenLabs: `onboard check --written` aprovado com sucesso.
+- **Assinatura:** Antigravity AI Engine — 25 de Novembro de 2026, 13:00 (Africa/Maputo).
+
+
+### 27/11/2026 — 01:40 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Renovação da Home Screen & Elevação do Orientador Espiritual com IA (implementado)
+- **Elevação do Orientador Espiritual com IA (`App.tsx`, `HomeScreen.tsx`, `AIAssistant.tsx`, `BibleReader.tsx`):**
+  - **Aba Canônica 5 no Rodapé:** A 5ª aba da barra de navegação inferior permanente foi alterada de perfil para "Orientador IA" com ícone sagrado `auto_awesome`, ancorando a presença da inteligência artificial pastoral em todas as telas da aplicação.
+  - **Card de Grande Relevância na Home:** Inserido card proeminente "Orientador Espiritual com IA" logo abaixo do Versículo do Dia com input de reflexão rápida + 3 chips interativos de estudo ("Explicar versículo de hoje", "Vencer ansiedade", "Perdão bíblico").
+  - **Handoff Fluído de Prompts:** Conexão reativa via `sessionStorage.getItem('biblia_ai_pending_prompt')` entre a Home, o Leitor Bíblico ("Consultar Orientador com IA" no versículo) e a tela de IA, iniciando o raciocínio teológico e streaming imediatamente ao navegar.
+- **Renovação da Barra Superior (Header) & Layout da Home:**
+  - **Substituição do Círculo Duplicado pela Lupa de Pesquisa (Opção 1):** O avatar do utilizador já existia no canto superior esquerdo com acesso ao perfil; no canto superior direito, o círculo duplicado foi substituído por um botão de Pesquisa nas Escrituras (Lupa 🔍), ao lado do seletor de tema claro/escuro.
+  - **Saudação Contextual Temporal:** Saudação personalizada com base na hora do dia (`Bom dia ☀️`, `Boa tarde 🌿`, `Boa noite 🌙`) acompanhada de versículo/frase inspiradora.
+  - **Harmonização da Retomada:** Fim dos dois botões primários concorrentes; "Continuar Jornada" permanece como herói gamificado, enquanto a última leitura livre foi transformada em uma elegante faixa secundária com atalho de áudio de 1 toque.
+  - **Bento Grid Refinado:** Substituídas redundâncias de IA e Áudio por 4 ações claras: Oração & Diário, Planos de Leitura, Desafio Diário (Quiz) e Comunidade & Clãs.
+  - **Banner de Membresia Inteligente:** Estado visual contextual para utilizadores Free (chamada para desbloquear Orientador sem limites) vs Membros Ativos Premium/Master.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (255 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 01:40 (Africa/Maputo).
+
+
+### 27/11/2026 — 02:00 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Gerador de Imagens Sacras, Reflexão Devocional & Modal Interativo de Ofensiva (implementado)
+- **Reflexão Devocional Prática no Versículo do Dia (`HomeScreen.tsx`):**
+  - Adicionada aplicação pastoral de 2 linhas aos 14 versículos rotativos de `DAILY_VERSES`.
+  - Exibição de destaque com ícone `lightbulb` em tom âmbar suave integrada ao card do Versículo do Dia.
+- **Gerador de Imagem Sagrada para Redes Sociais (`HomeScreen.tsx`):**
+  - Motor de renderização dinâmico via HTML5 `<canvas>` (1080x1350, 4:5 portrait) 100% offline, seguro e ultrarrápido (<10ms).
+  - Estética refinada: gradiente obsidiana e teal profundo, moldura ornamental dourada com cantoneiras clássicas, tipografia serifada com aspas artísticas, citação bíblica canônica e reflexão devocional.
+  - Modal com pré-visualização em alta resolução e 3 ações diretas:
+    - **Partilhar Imagem:** Envio nativo de arquivo para WhatsApp Status e Instagram Stories via `navigator.share({ files })`.
+    - **Baixar PNG:** Download do arquivo de imagem com 1 clique para a galeria.
+    - **Copiar Texto:** Cópia instantânea do versículo com referência e reflexão para a área de transferência.
+- **Modal Interativo de Ofensiva / Streak (🔥):**
+  - Clique na insígnia da chama do card de nível abre o painel devocional da ofensiva.
+  - Contador proeminente com ícone de chama animada (`local_fire_department`).
+  - Calendário semanal real dos últimos 7 dias via `getRecentPracticeDates(7)` com status de cumprimento, destaque para o dia de hoje e aviso de preservação da chama até à meia-noite.
+  - Ação direta com 1 toque para abrir o Desafio Diário (`screen-desafio-diario`).
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (255 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 02:00 (Africa/Maputo).
+
+
+### 27/11/2026 — 09:30 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Banner com Imagem Sacra, Galeria de Fundos no Compartilhar & Textos Humanizados (implementado)
+- **Banner da Palavra do Dia com Imagem e Efeito Degradê Espelhado (`HomeScreen.tsx`):**
+  - O antigo degradê plano foi substituído por uma imagem de fundo inspiradora com montanhas e amanhecer dourado (`/backgrounds/dawn-mountains.svg`), com zoom sutil interativo e efeito espelho/degradê em camadas (`bg-gradient-to-t from-black/95 via-black/60 to-black/35`) garantindo contraste primoroso e nitidez do texto bíblico.
+- **Galeria de Personalização de Fundos no Modal de Partilha (`HomeScreen.tsx`, `public/backgrounds/`):**
+  - Criadas 4 artes sacras em SVG de altíssima fidelidade e 100% offline: *Amanhecer nas Montanhas*, *Céu Noturno Sagrado*, *Jardim de Oliveiras & Luz* e *Pergaminho Bíblico Clássico*.
+  - Mini-carrossel de seleção tátil com 11 opções categorizadas:
+    - **Imagens:** Amanhecer, Céu Noturno, Jardim de Paz, Pergaminho.
+    - **Degradês:** Teal Sagrado, Aurora Âmbar, Noite Sagrada, Vinho Solene.
+    - **Cores Sólidas:** Obsidiana, Ardósia, Carvão.
+  - Alternância instantânea que re-renderiza o Canvas mantendo a proporção 4:5 e o brilho sagrado.
+- **Hierarquia Visual e Textos Humanizados:**
+  - Substituído o texto genérico ("Cartão de Versículo") por títulos e subtítulos devocionais autênticos: *"Partilhar Palavra do Dia"* e *"Personalize o fundo e inspire quem você ama"*.
+  - Sequência canônica no card e no modal: **Versículo em destaque** ➔ **Referência canônica** ➔ **Reflexão devocional pastoral** logo abaixo.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (255 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 09:30 (Africa/Maputo).
+
+
+### 27/11/2026 — 10:05 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Menu Hambúrguer Drawer, Canal Afro Faith Flow, Home Despoluída & Nome Real Google (implementado)
+- **Sincronização do Nome e Apelido Reais do Google (`AuthContext.tsx`, `HomeScreen.tsx`):**
+  - O sistema agora extrai com máxima prioridade o nome e sobrenome reais do Google OAuth (`user_metadata.full_name`, `user_metadata.name`, `identities[0].identity_data`, `given_name + family_name`), eliminando a exibição do prefixo cru do email (`jccchissano`).
+  - No `AuthContext.tsx`, a rotina de sincronização atualiza ativamente a tabela `profiles.display_name` no Supabase caso o banco ainda contivesse o prefixo do email.
+- **Topo da Home Reordenado (`HomeScreen.tsx`):**
+  - **Seletor de Temas** posicionado elegantemente à esquerda.
+  - **Menu Hambúrguer (☰)** posicionado à extrema direita, substituindo a lupa e abrindo o novo Drawer de navegação.
+- **Remoção do Bento Grid e Despoluição Visual da Home:**
+  - O bloco de 4 botões redundantes (`Oração & Diário`, `Planos de Leitura`, `Desafio Diário`, `Comunidade & Clãs`) foi removido do corpo da tela principal, deixando a Home limpa, leve e focada na Retomada de Leitura/Jornada e no Versículo do Dia.
+- **Novo Menu Hambúrguer Lateral (Slide-over Drawer):**
+  - **Cabeçalho de Identidade:** Avatar real (`UserAvatar`), Nome e Sobrenome reais, email e badge destacado do plano atual (`FREE`, `PRO`, `MASTER`).
+  - **Bloco 1 — Vida Devocional & Louvor:**
+    - **Orações & Diário Espiritual:** Aciona o modal de intenções com contador ativo de orações.
+    - **Músicas Gospel (Afro Faith Flow):** Link oficial com selo "CANAL OFICIAL" para o canal no YouTube (`https://www.youtube.com/@AfroFaithFlow`).
+    - **Planos de Leitura:** Navega para `screen-planos`.
+    - **Leitura da Bíblia:** Atalho direto para os 66 livros bíblicos (`screen-biblia`).
+  - **Bloco 2 — Jornada & Comunhão:**
+    - **Desafio Diário:** Quiz e proteção de ofensiva (`screen-desafio-diario`).
+    - **Mapa dos Mundos:** Visualização das fases e mundos bíblicos (`screen-mapa-mundos`).
+    - **Classificação & Ligas:** Tabela semanal de posições (`screen-ranking`).
+    - **Comunidade & Clãs:** Interação comunitária e oração mútua (`screen-clans`).
+  - **Bloco 3 — Ferramentas & Definições:**
+    - **Áudio Bíblia Dramatizada:** Player contínuo (`screen-audio`).
+    - **Estatísticas de Estudo:** Gráficos, métricas e histórico (`screen-estatisticas`).
+    - **Membresia & Apoio:** Acesso ao modal de planos e patrocínio.
+    - **Perfil & Definições:** Configurações da conta (`screen-perfil`).
+  - **Rodapé do Drawer:** Selo comemorativo `BiblIA v2.1.0 · Lâmpada para os teus pés`.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (255 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 10:05 (Africa/Maputo).
+
+
+### 27/11/2026 — 11:20 (Africa/Maputo) — Assinatura: Antigravity AI Engine — UX Teológica Interativa, Renderizador Markdown, Referências Clicáveis & Sugestões de Aprofundamento (implementado)
+- **Eliminação Total de JSON Bruto & Parsing Resiliente (`assistantService.ts`):**
+  - O pipeline de extração de resposta (`parseAssistantJsonResponse`) limpa qualquer caractere de escape residual (`\n`, `\"`, `\t`), marcadores de bloco de código (````json`) e recupera com regex inteligente o campo `answer` mesmo se o JSON for interrompido, eliminando a exibição de chaves, aspas e delimitadores técnicos na tela.
+  - O parâmetro `maxOutputTokens` foi aumentado para 2500, evitando truncamento prematuro de exegeses bíblicas profundas.
+  - Suporte a histórico de turnos anteriores (`conversationHistory`) para contextualização contínua de perguntas de seguimento.
+- **Novo Renderizador Markdown Teológico (`TheologicalMarkdown.tsx`):**
+  - Renderização tipográfica rica com hierarquia sagrada: títulos de seções (`###`), tópicos numerados com badges circulares elegantes, listas com marcadores estilizados e citações destacadas.
+  - **Reconhecimento e Destaque de Escrituras Clicáveis no Texto:** Qualquer referência aos 66 livros bíblicos presente no corpo da resposta (ex: `Provérbios 6:6-11`, `2 Tessalonicenses 3:10`) é detectada dinamicamente e transformada em link interativo para abrir diretamente a passagem no leitor bíblico (`screen-biblia`).
+  - **Caixa de Meditação & Reflexão:** Seções do tipo *"Para refletir"* ou *"Para Meditar"* são exibidas dentro de um cartão temático com borda âmbar e ícone de sabedoria (`lightbulb` / `auto_stories`).
+- **Sugestões Interativas de Continuação ("Queres aprofundar este assunto?"):**
+  - A IA agora gera ativamente de 2 a 3 perguntas de aprofundamento teológico no array `suggested_questions`.
+  - Exibidas como cartões táteis interativos no rodapé da mensagem do Assistente. Ao clicar, a pergunta é enviada de imediato na mesma conversa.
+- **Barra Completa de Ações nas Respostas:**
+  - **Ouvir resposta:** Síntese de voz limpa (remove marcadores Markdown e formatação antes de falar).
+  - **Copiar:** Copia o estudo bíblico limpo para a área de transferência com toast.
+  - **Partilhar:** API de partilha nativa do dispositivo ou fallback de cópia.
+  - **Guardar:** Salva o estudo nos favoritos/estudos guardados do usuário.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (256 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 11:20 (Africa/Maputo).
+
+### 27/11/2026 — 11:35 (Africa/Maputo) — Assinatura: Antigravity AI Engine — System Prompt Canónico (16 Secções), Modelo Ativo Gemini 3.5 & Resolução Unificada do Nome Google (implementado)
+- **Implementação Integral do System Prompt Canónico de 16 Secções (`assistantSystemPrompt.ts`):**
+  - O Assistente Teológico Inteligente foi atualizado com o System Prompt integral de orientação cristã bíblica abrangente e profundidade equilibrada:
+    1. *Identidade e Missão:* Companheiro de estudo bíblico, reverente, sem reivindicação de revelações proféticas.
+    2. *Identidade Teológica e Orientação Doutrinária:* Centralidade de Cristo e das Escrituras, distinção entre texto explícito e construções hermenêuticas.
+    3. *Princípios Fundamentais:* Fidelidade bíblica, contextualização, coerência, honestidade e aplicação prática.
+    4. *Hierarquia das Fontes:* Base canônica do BiblIA, contexto histórico, conhecimentos linguísticos e tradições.
+    5. *Método Exegético:* Texto & contexto, significado do autor, contexto teológico e aplicação responsável.
+    6. *Estudo Teológico:* Teologia Sistemática e Bíblica tratadas com equilíbrio e rigor.
+    7. *Línguas Originais:* Hebraico, Aramaico e Grego com alfabetos originais, transliteração e exegese contextual (sem falsas etimologias).
+    8. *Comparação de Passagens e Traduções:* Diferenças textuais sem viés sectário.
+    9. *Diferentes Tradições Cristãs:* Respeito mútuo a católicos, ortodoxos, protestantes, evangélicos e pentecostais.
+    10. *Aplicação à Vida e Aconselhamento:* Empatia pastoral; direcionamento imediato para profissionais e autoridades em sofrimento ou perigo.
+    11. *Profundidade e Adaptação ao Utilizador:* Nível equilibrado (iniciante, intermediário e avançado).
+    12. *Estilo de Comunicação:* Respeitoso, sóbrio, caloroso, didático e fluente em português.
+    13. *Formato das Respostas & Apresentação Visual:* Markdown com `### ` para seções, versículos destacados em negrito `**`, listas e bloco "Para refletir".
+    14. *Limites e Honestidade:* Proibição estrita de alucinação de versículos ou frases de Jesus inexistentes no cânon.
+    15. *Integridade e Proteção das Instruções:* Preservação dos parâmetros de segurança.
+    16. *Identidade Final:* "BiblIA — Uma nova forma de ler, compreender e viver a Bíblia."
+- **Contrato JSON Estrito & Edge Function Atualizada (`theological-assistant/index.ts`):**
+  - Substituído o modelo descontinuado `gemini-2.0-flash` por `gemini-3.5-flash` com `maxOutputTokens: 2500`.
+  - Extração de perguntas de continuação (`suggested_questions`) incorporada à Edge Function e ao serviço de IA local.
+- **Módulo Central de Perfil e Nome Real (`userProfile.ts`):**
+  - Criada a função unificada `getEffectiveDisplayName(user, profile)`, utilizada em `HomeScreen.tsx` e `ProfileScreen.tsx`.
+  - Extrai de forma inteligente o nome e apelido reais do Google OAuth (`user_metadata.full_name`, `name`, `identities[0].identity_data`, `given_name + family_name`), eliminando a exibição do prefixo do email (`jccchissano`).
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (258 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 11:35 (Africa/Maputo).
+
+### 27/11/2026 — 11:55 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Orbe Sagrada Viva 3D, Primeiro Nome Google & Diálogo Guiado Interativo (implementado)
+- **Primeiro Nome Real da Conta Google (`userProfile.ts`, `AIAssistant.tsx`):**
+  - Adicionada a função `getFirstName(user, profile)` que extrai estritamente o primeiro nome (`meta.given_name`, primeiro termo de `full_name`).
+  - A saudação no Assistente agora exibe de forma calorosa e pessoal: `«Olá, João. Em que texto bíblico vamos meditar hoje?»` (eliminando em definitivo `Olá, jccchissano`).
+- **Orbe Sagrada Viva em Partículas 3D (`SacredOrb.tsx`):**
+  - Criado o componente de computação gráfica em Canvas 2D/WebGL ultraleve (60fps, 380 partículas móveis).
+  - Distribuição esférica de Fibonacci com ondas topológicas senoidais e gradiente sagrado: Esmeralda (`#2D7A7C`), Ouro Radiante (`#F59E0B`) e Branco Pérola, com halo de brilho Shekinah.
+  - **4 Estados Dinâmicos Reativos:**
+    1. *Idle (Repouso / Boas-Vindas):* Respiração contínua com ondulações de águas tranquilas.
+    2. *Thinking (Meditação Teológica / Pesquisa):* Aceleração orbital e contração concêntrica com pulso dourado.
+    3. *Streaming (Revelação do Texto):* Ondas expansivas rítmicas.
+    4. *Speaking (Leitura Vocal / Áudio):* Visualizador de ressonância harmônica com cristas dinâmicas que vibram em resposta à narração da Palavra.
+  - Substituição do ícone estático verde/azul pela `SacredOrb` no centro da tela de boas-vindas e no cabeçalho do Assistente, bem como no card *Orientador Espiritual* da tela Home.
+- **Diálogo Guiado Interativo no Chat (Opção B):**
+  - Os 4 cartões de estudo bíblico (*Explicar uma passagem*, *Contexto histórico*, *Comparar textos*, *Oração breve*) não disparam mais perguntas prontas indesejadas nem gastam quota sem autorização.
+  - Ao clicar, o Assistente acolhe o utilizador com uma mensagem pastoral de abertura personalizada convidando-o a citar o texto ou o motivo da sua oração, focando automaticamente o campo de digitação.
+- **Integração dos Botões da Home com o Assistente:**
+  - O `AIAssistant.tsx` agora consome ativamente qualquer pergunta pendente gravada em `sessionStorage` (`biblia_ai_pending_prompt`).
+  - Clicar em *«Explicar versículo de hoje»*, *«Vencer ansiedade»*, *«Perdão bíblico»* ou digitar no campo da Home redireciona e inicia o estudo instantaneamente.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (259 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 11:55 (Africa/Maputo).
+
+### 27/11/2026 — 12:20 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Quotas Reais, Tema Escuro, Edge TTS Gratuito & Ícones Offline (implementado)
+- **Contagem e Redução Real de Quotas Diárias (`assistantQuotaService.ts`, `assistantService.ts`, `AIAssistant.tsx`):**
+  - Resolvido o bug em que o número de consultas diárias permanecia estático em 59/60.
+  - Implementado o serviço `assistantQuotaService.ts` com base no fuso horário canônico de Moçambique (`Africa/Maputo`):
+    - *Plano FREE:* 5 consultas por dia.
+    - *Plano PRO:* 25 consultas por dia.
+    - *Plano MASTER:* 60 consultas por dia.
+  - A cada pergunta concluída com sucesso pelo Assistente, o contador decrementa de forma reativa e persiste no `localStorage` por data e utilizador.
+  - Bloqueio gracioso com mensagem pastoral caso o limite diário seja alcançado, com convite para o dia seguinte ou upgrade de plano.
+- **Harmonização do Tema Escuro da Gaveta do Assistente (`AIAssistant.tsx`):**
+  - Substituído o fundo claro/branco da sidebar lateral por paleta escura profunda unificada: fundo `#0c1816`, cartões `#122320`, bordas sutis `border-white/10` e textos contrastantes em cinza-claro e menta sagrada, harmonizando perfeitamente com a aplicação.
+- **Microsoft Edge TTS como Padrão Gratuito & ElevenLabs para Planos Pagos (`audioEngine.ts`, `AudioSettingsDrawer.tsx`):**
+  - Adicionados 4 perfis de voz neural naturais do Microsoft Edge como padrão gratuito de leitura:
+    - *Davi (Voz Solene)*: mapeia para `pt-BR-AntonioNeural` (ou voz natural pt-BR do sistema).
+    - *Ester (Voz Serena)*: mapeia para `pt-BR-FranciscaNeural` (ou voz natural suave pt-BR).
+    - *Paulo (Voz Apostólica)*: mapeia para `pt-PT-DuarteNeural` / `pt-BR`.
+    - *Timóteo (Voz Ponderada)*: mapeia para `pt-PT-RaquelNeural` / `pt-BR`.
+  - Perfis ElevenLabs reservados com badge `PRO HD` para futuros planos pagos, garantindo áudio fluído sem custos de API por padrão.
+- **Resolução Definitiva dos Ícones de Texto / Ligaduras em Modo Offline (`index.html`, `src/index.css`, `public/fonts/`):**
+  - Diagnosticada a falha de ligaduras de fonte onde termos como `local_fire_department`, `home`, `sports_esports`, `menu_book` renderizavam como texto Times New Roman quando a conexão oscilava ou em cache com `display=swap`.
+  - Baixado o arquivo de fontes binário WOFF2 `material-symbols-outlined.woff2` (1.14 MB) diretamente para `public/fonts/`.
+  - Adicionada regra `@font-face` local prioritária no `src/index.css` com pré-carregamento `<link rel="preload">` no `index.html` e reforço CSS obrigatório (`font-family: 'Material Symbols Outlined', 'Material Icons', sans-serif !important; font-feature-settings: 'liga';`).
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (260 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 12:20 (Africa/Maputo).
+
+### 27/11/2026 — 12:45 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Sistema de Tutoriais Guiados Contextuais (Spotlight) (implementado)
+- **Serviço Central de Persistência (`tutorialService.ts`):**
+  - Implementado o controle de estado e persistência por módulo (`app`, `game`, `ai`) e por utilizador (`localStorage`).
+  - Funções `isTutorialCompleted`, `markTutorialCompleted`, `resetTutorial` e catálogo com os passos canônicos `TUTORIAL_STEPS`.
+  - **Garantia de Uso Único:** Exibido estritamente na primeira visita do utilizador a cada tela. Nunca repete automaticamente.
+- **Componente Reutilizável de Spotlight SVG com Máscara (`TutorialSpotlight.tsx`):**
+  - Máscara escura com desfoque e recorte dinâmico sobre o elemento real da interface (`getBoundingClientRect`).
+  - Anel de pulso sagrado neon (`#10B981`) em volta do elemento-alvo.
+  - Balão informativo flutuante posicionado de forma inteligente (acima ou abaixo do alvo) sem cobrir safe areas móveis.
+  - Controles: Contador de passos (`Passo X de Y`), botão «Saltar» sempre disponível em todos os passos e navegação «Anterior» / «Próximo» / «Concluir».
+- **Os 3 Módulos de Tutorial Integrados:**
+  1. *Tour do App (`HomeScreen.tsx`, `App.tsx`):*
+     - Passo 1: Versículo do Dia (Pão diário, meditação e partilha).
+     - Passo 2: Barra de Navegação Inferior (Início, Áudio, Jogo, Leitura, IA).
+     - Passo 3: Caminhada Espiritual (Nível, ofensiva de dias e metas).
+  2. *Tour do Jogo Bíblico (`GameDashboard.tsx`):*
+     - Passo 1: O Caminho da Fé (Primeira fase e trilha de mundos).
+     - Passo 2: Talentos e Vidas (Corações sagrados e regeneração).
+     - Passo 3: Desafios Diários (Quizzes, V/F e completar versículos).
+  3. *Tour do Orientador IA (`AIAssistant.tsx`):*
+     - Passo 1: Orbe Sagrada Viva (Animação reativa de presença e voz).
+     - Passo 2: Diálogos Bíblicos Guiados (Os 4 cartões de estudo teológico).
+     - Passo 3: Quotas Diárias & Voz Neural (Perguntas diárias gratuitas e leitura vocal).
+- **Revisita de Tutoriais nas Configurações (`ProfileScreen.tsx`):**
+  - Adicionado o botão «Rever Tutoriais do App» na tela de Perfil.
+  - Modal com seleção individual dos 3 tutoriais (*Tela Inicial*, *Jornada & Jogo*, *Orientador IA*), permitindo que o utilizador reative e reassista a qualquer momento.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (262 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 12:45 (Africa/Maputo).
+
+### 27/11/2026 — 13:30 (Africa/Maputo) — Assinatura: Antigravity AI Engine — Refinamentos Canônicos de Áudio, Relógio Circular, Sons Ambiente, Paleta Escura e Posicionamento de Tutoriais (implementado)
+- **1. Player de Áudio & Orbe Sagrada 3D:**
+  - Substituído o banner genérico superior pela Orbe Sagrada 3D animada (`SacredOrb`) com estado `'speaking'` durante a reprodução ativa e `'idle'` quando pausado.
+  - Tipografia de versículos centralizada e elegante com leitura progressiva e legível (sem ocultação excessiva do texto).
+  - Subtítulo do capítulo corrigido para refletir dinamicamente o livro atual (ex: João 3).
+- **2. Relógio Circular no Jogo Bíblico (`GameLessonHost.tsx`):**
+  - Substituído o timer pill oval pelo anel circular canônico SVG (`size-11`) com contagem regressiva em segundos centralizada, anel de progresso proporcional (`stroke-dashoffset`) e pulso de alerta vermelho em tempo crítico.
+- **3. Vozes Neurais Padrão & Sintetizador de Som Ambiente:**
+  - Corrigido o seletor de vozes padrão no `AudioContext.tsx` para vozes gratuitas Microsoft Edge Neural (`edge_davi`, `edge_ester`, `edge_paulo`, `edge_timoteo`) sem cair indevidamente no fallback de ElevenLabs.
+  - Restaurado o volume do sintetizador de paisagem sonora ambiente (`audioEngine.ts`) com ganho auditivo calibrado e garantia de `resume()` no AudioContext.
+- **4. Harmonização da Paleta do Modo Escuro:**
+  - Ajustadas as superfícies e cartões de celebração e vitória (`RewardModal.tsx`) para o verde petróleo profundo canônico (`#0f2d27` / `#13433e`) com cartões em `#15453f`, respeitando a integridade do tema claro e escuro.
+- **5. Correção de Posicionamento do Tutorial Spotlight (`TutorialSpotlight.tsx`):**
+  - Implementado algoritmo de clamping e cálculo dinâmico de espaço vertical (`spaceAbove` vs `spaceBelow`), prevenindo sobreposição com elementos de cabeçalho no topo da tela ou corte em modo tela cheia desktop.
+- **Verificações Executadas:**
+  - `npm.cmd run build` (`tsc -b && vite build`): **Exit Code 0** (262 módulos transformados, 0 erros TypeScript).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 13:30 (Africa/Maputo).

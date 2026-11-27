@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0a151d"/>
+      <stop offset="35%" stop-color="#192837"/>
+      <stop offset="65%" stop-color="#3d2a3e"/>
+      <stop offset="85%" stop-color="#8a4836"/>
+      <stop offset="100%" stop-color="#d97736"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="82%" r="45%">
+      <stop offset="0%" stop-color="#fed7aa" stop-opacity="0.9"/>
+      <stop offset="30%" stop-color="#f97316" stop-opacity="0.5"/>
+      <stop offset="70%" stop-color="#b45309" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mount1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a3b4c"/>
+      <stop offset="100%" stop-color="#211728"/>
+    </linearGradient>
+    <linearGradient id="mount2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#242f3d"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="mount3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#141e28"/>
+      <stop offset="100%" stop-color="#080e14"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fed7aa" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1080" height="1350" fill="url(#sky)"/>
+
+  <!-- Morning Sun Glow -->
+  <circle cx="540" cy="980" r="450" fill="url(#sun)"/>
+
+  <!-- Stars in Twilight Sky -->
+  <g fill="#ffffff" opacity="0.6">
+    <circle cx="120" cy="120" r="2"/>
+    <circle cx="280" cy="80" r="1.5"/>
+    <circle cx="450" cy="160" r="2.5"/>
+    <circle cx="720" cy="100" r="2"/>
+    <circle cx="890" cy="140" r="1.5"/>
+    <circle cx="980" cy="90" r="2.5"/>
+    <circle cx="200" cy="220" r="1.5"/>
+    <circle cx="640" cy="210" r="2"/>
+    <circle cx="820" cy="240" r="1.5"/>
+  </g>
+
+  <!-- Distant Layer Mountains -->
+  <path d="M-50,1050 L120,860 L310,950 L520,810 L740,940 L930,830 L1130,980 L1130,1350 L-50,1350 Z" fill="url(#mount1)" opacity="0.85"/>
+
+  <!-- Mid Layer Mountains -->
+  <path d="M-50,1120 L180,940 L380,1030 L620,910 L810,1020 L1040,920 L1130,980 L1130,1350 L-50,1350 Z" fill="url(#mount2)"/>
+
+  <!-- Morning Valley Mist -->
+  <rect x="0" y="980" width="1080" height="120" fill="url(#mist)"/>
+
+  <!-- Foreground Foothills & Tree Silhouettes -->
+  <path d="M-50,1190 L90,1120 L260,1170 L480,1090 L710,1160 L920,1110 L1130,1180 L1130,1350 L-50,1350 Z" fill="url(#mount3)"/>
+  
+  <!-- Subtle pine silhouettes at base -->
+  <g fill="#050a0e" opacity="0.9">
+    <polygon points="120,1220 126,1260 114,1260"/>
+    <polygon points="120,1205 125,1235 115,1235"/>
+    <polygon points="340,1210 348,1260 332,1260"/>
+    <polygon points="340,1190 346,1230 334,1230"/>
+    <polygon points="680,1200 688,1260 672,1260"/>
+    <polygon points="850,1220 857,1260 843,1260"/>
+  </g>
+
+  <!-- Deep Base Gradient to Anchor Text Contrast -->
+  <rect x="0" y="900" width="1080" height="450" fill="black" opacity="0.45"/>
+</svg>

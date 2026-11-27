@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <defs>
+    <linearGradient id="emeraldBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#041410"/>
+      <stop offset="45%" stop-color="#0a2920"/>
+      <stop offset="80%" stop-color="#071b15"/>
+      <stop offset="100%" stop-color="#030b08"/>
+    </linearGradient>
+    <linearGradient id="sunbeam" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.32"/>
+      <stop offset="40%" stop-color="#fef08a" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="45%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.15"/>
+      <stop offset="70%" stop-color="#064e3b" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1080" height="1350" fill="url(#emeraldBg)"/>
+  <rect width="1080" height="1350" fill="url(#centerGlow)"/>
+
+  <!-- Divine Sunbeams Streaming From Top-Left -->
+  <polygon points="-50,-50 420,-50 820,1350 350,1350" fill="url(#sunbeam)"/>
+  <polygon points="120,-50 380,-50 960,1350 700,1350" fill="url(#sunbeam)" opacity="0.6"/>
+
+  <!-- Golden Light Particles / Motes -->
+  <g fill="#fef08a" opacity="0.7">
+    <circle cx="280" cy="320" r="3.5" filter="blur(0.5px)"/>
+    <circle cx="410" cy="460" r="2.5"/>
+    <circle cx="530" cy="380" r="4" opacity="0.9"/>
+    <circle cx="360" cy="620" r="2"/>
+    <circle cx="480" cy="740" r="3.2"/>
+    <circle cx="620" cy="680" r="2.8"/>
+    <circle cx="710" cy="860" r="3.5"/>
+  </g>
+
+  <!-- Botanical Olive Foliage Silhouettes Framing Borders -->
+  <g fill="#020906" opacity="0.85">
+    <!-- Top-Right Branch -->
+    <path d="M1080,0 Q920,80 840,180 Q880,120 980,60 Z"/>
+    <path d="M840,180 Q800,240 760,320 Q810,270 880,220 Z"/>
+    <ellipse cx="820" cy="190" rx="28" ry="12" transform="rotate(-35 820 190)"/>
+    <ellipse cx="870" cy="150" rx="32" ry="14" transform="rotate(-25 870 150)"/>
+    <ellipse cx="780" cy="270" rx="26" ry="11" transform="rotate(-40 780 270)"/>
+
+    <!-- Bottom Framing Leaves -->
+    <path d="M-20,1350 Q160,1240 280,1280 Q140,1310 -20,1350 Z"/>
+    <ellipse cx="140" cy="1270" rx="35" ry="14" transform="rotate(25 140 1270)"/>
+    <ellipse cx="230" cy="1285" rx="30" ry="13" transform="rotate(15 230 1285)"/>
+  </g>
+</svg>

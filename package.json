@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.80.0",
     "@supabase/supabase-js": "^2.117.3",
     "lucide-react": "^0.469.0",
     "qrcode": "^1.5.4",
