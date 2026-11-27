@@ -1304,3 +1304,20 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
      - Gestão determinística de cotas diárias e histórico local/remoto preservado.
 - **Próximas Fases Definidas pelo Usuário:** Aprimoramento, refinamento e amadurecimento progressivo, seguindo rigorosamente o fluxo: *Diagnosticar -> Amadurecer -> Sugerir -> Planejar -> Aguardar Aprovação Expressa antes de qualquer execução*.
 - **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 20:20 (Africa/Maputo).
+
+
+---
+
+### [27/11/2026 - 20:35] REFINAMENTO DO CABEÇALHO: FOTO CIRCULAR E PRIMEIRO NOME
+- **Solicitação Aprovada pelo Usuário:**
+  1. Shape da foto do utilizador estritamente circular (sem distorção oval).
+  2. Saudação temporal com apenas o primeiro nome do utilizador (`Cesário`).
+- **Implementações Realizadas:**
+  1. `src/components/common/UserAvatar.tsx`:
+     - Adicionado `aspect-square`, `shrink-0`, `rounded-full` e `object-cover` nos nós de imagem e container (`w-X h-X min-w-X min-h-X`).
+  2. `src/components/home/HomeScreen.tsx`:
+     - Importada função `getFirstName(user, profile)`.
+     - `temporalGreeting` atualizada para renderizar `Boa tarde, Cesário 🌿`.
+     - Botão do avatar configurado com `shrink-0 aspect-square rounded-full self-center overflow-hidden`.
+- **Validação:** Compilação de produção bem-sucedida (`tsc -b && vite build` em 6.66s, 0 erros).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 20:35 (Africa/Maputo).

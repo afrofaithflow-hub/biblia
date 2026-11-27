@@ -10,11 +10,11 @@ interface UserAvatarProps {
 }
 
 const SIZE_MAP = {
-  xs: { box: 'size-6', text: 'text-[10px]', icon: 'text-[13px]', border: 'border' },
-  sm: { box: 'size-8', text: 'text-xs', icon: 'text-base', border: 'border' },
-  md: { box: 'size-10', text: 'text-sm font-bold', icon: 'text-lg', border: 'border-2' },
-  lg: { box: 'size-16', text: 'text-xl font-extrabold', icon: 'text-3xl', border: 'border-2' },
-  xl: { box: 'size-24', text: 'text-3xl font-black', icon: 'text-4xl', border: 'border-2' },
+  xs: { box: 'w-6 h-6 min-w-6 min-h-6 aspect-square', text: 'text-[10px]', icon: 'text-[13px]', border: 'border' },
+  sm: { box: 'w-8 h-8 min-w-8 min-h-8 aspect-square', text: 'text-xs', icon: 'text-base', border: 'border' },
+  md: { box: 'w-10 h-10 min-w-10 min-h-10 aspect-square', text: 'text-sm font-bold', icon: 'text-lg', border: 'border-2' },
+  lg: { box: 'w-16 h-16 min-w-16 min-h-16 aspect-square', text: 'text-xl font-extrabold', icon: 'text-3xl', border: 'border-2' },
+  xl: { box: 'w-24 h-24 min-w-24 min-h-24 aspect-square', text: 'text-3xl font-black', icon: 'text-4xl', border: 'border-2' },
 };
 
 export const UserAvatar: React.FC<UserAvatarProps> = ({
@@ -38,7 +38,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   if (spiritualPreset) {
     return (
       <div
-        className={`shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br shadow-sm select-none ${spiritualPreset.bgGradient} ${spiritualPreset.textColor} ${config.box} ${borderClass} ${className}`}
+        className={`shrink-0 aspect-square rounded-full flex items-center justify-center bg-gradient-to-br shadow-sm select-none ${spiritualPreset.bgGradient} ${spiritualPreset.textColor} ${config.box} ${borderClass} ${className}`}
         title={spiritualPreset.name}
       >
         <span className={`material-symbols-outlined ${config.icon}`}>{spiritualPreset.symbol}</span>
@@ -56,7 +56,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       <img
         src={avatarUrl}
         alt={displayName || 'Avatar'}
-        className={`shrink-0 rounded-full object-cover shadow-sm ${config.box} ${borderClass} ${className}`}
+        className={`shrink-0 aspect-square rounded-full object-cover shadow-sm ${config.box} ${borderClass} ${className}`}
         onError={() => setImgError(true)}
       />
     );
@@ -65,7 +65,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   // 3. Fallback: Inicial com estilo sagrado
   return (
     <div
-      className={`shrink-0 rounded-full flex items-center justify-center bg-sacred-brand/15 text-sacred-brand dark:bg-slate-800 dark:text-sacred-neon font-black shadow-sm select-none ${config.box} ${config.text} ${borderClass} ${className}`}
+      className={`shrink-0 aspect-square rounded-full flex items-center justify-center bg-sacred-brand/15 text-sacred-brand dark:bg-slate-800 dark:text-sacred-neon font-black shadow-sm select-none ${config.box} ${config.text} ${borderClass} ${className}`}
     >
       {initial}
     </div>

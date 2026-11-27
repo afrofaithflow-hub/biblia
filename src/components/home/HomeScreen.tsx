@@ -8,7 +8,7 @@ import { DEFAULT_BIBLE_TRANSLATION_ID, loadBibleChapter, getBibleTranslationLabe
 import { getMaputoDateKey, getUserProgressTracks, getRecentPracticeDates } from '../../lib/gameSession';
 import { getCurrentJourneyPhase } from '../../lib/gameJourney';
 import { queueBibleReference } from '../../lib/scriptureReference';
-import { getEffectiveDisplayName } from '../../lib/userProfile';
+import { getEffectiveDisplayName, getFirstName } from '../../lib/userProfile';
 import { UserAvatar } from '../common/UserAvatar';
 import { SacredOrb } from '../ai/SacredOrb';
 import { TutorialSpotlight } from '../common/TutorialSpotlight';
@@ -457,6 +457,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
 
   // Extração inteligente do Nome e Sobrenome reais (Google OAuth / Profile / Metadata / Identities)
   const displayName = useMemo(() => getEffectiveDisplayName(user, profile), [user, profile?.display_name]);
+  const firstName = useMemo(() => getFirstName(user, profile), [user, profile?.display_name]);
 
   const todayKey = getMaputoDateKey();
 
@@ -502,7 +503,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
   // Saudação contextual temporal
   const temporalGreeting = useMemo(() => {
     const hour = new Date().getHours();
-    const cleanName = displayName ? `, ${displayName}` : '';
+    const cleanName = firstName ? `, ${firstName}` : '';
     if (hour >= 5 && hour < 12) {
       return {
         greeting: `Bom dia${cleanName} ☀️`,
@@ -519,7 +520,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
       greeting: `Boa noite${cleanName} 🌙`,
       phrase: 'Encontre descanso e consolo na Escritura sagrada.',
     };
-  }, [displayName]);
+  }, [firstName]);
 
   // Carrega o verso exato da última leitura
   useEffect(() => {
@@ -751,23 +752,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, showToast })
     <div className="flex-1 flex flex-col h-full overflow-y-auto no-scrollbar bg-bg-canvas dark:bg-dark-canvas text-slate-900 dark:text-slate-100 font-display transition-colors duration-300 pb-36">
       {/* Header Section */}
       <header className="flex items-center justify-between px-5 pt-4 pb-3 sticky top-0 z-20 bg-bg-canvas/95 dark:bg-dark-canvas/95 backdrop-blur-md border-b border-slate-200/60 dark:border-dark-border transition-colors">
-        <div className="flex items-center gap-3 animate-fade-in">
+        <div className="flex items-center gap-3 animate-fade-in min-w-0">
           <button
             onClick={() => onNavigate('screen-perfil')}
-            className="group relative transition-transform active:scale-95"
+            className="group relative shrink-0 aspect-square rounded-full overflow-hidden self-center transition-transform active:scale-95 flex items-center justify-center"
             title="Ver meu perfil e avatar"
           >
             <UserAvatar
               avatarUrl={profile.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar_url}
-              displayName={displayName}
+              displayName={firstName || displayName}
               size="md"
             />
           </button>
-          <div className="flex flex-col gap-0.5 text-left">
-            <h1 className="text-slate-900 dark:text-white text-lg font-extrabold leading-tight tracking-tight">
+          <div className="flex flex-col gap-0.5 text-left min-w-0">
+            <h1 className="text-slate-900 dark:text-white text-lg font-extrabold leading-tight tracking-tight truncate">
               {temporalGreeting.greeting}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium truncate">
               {temporalGreeting.phrase}
             </p>
           </div>
