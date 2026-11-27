@@ -18,7 +18,6 @@ import {
   getUserConversations,
   ScriptureReference,
   getEffectiveGeminiApiKey,
-  setCustomGeminiApiKey,
 } from '../../lib/assistantService';
 
 interface AIAssistantProps {
@@ -106,8 +105,6 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ onNavigate, showToast 
   }, [user?.id, planTier]);
   const [errorMessage, setErrorMessage] = useState('');
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(() => getEffectiveGeminiApiKey());
   const [showAiTutorial, setShowAiTutorial] = useState(false);
 
   useEffect(() => {
@@ -339,7 +336,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ onNavigate, showToast 
 
     if (!isConfigured && !hasDirectApiKey) {
       setErrorMessage(
-        'O Assistente Teológico necessita de uma chave Gemini. Clique no ícone de chave (🔑) no topo para colar a sua chave ou envie-a diretamente no chat do Antigravity.'
+        'O Assistente Teológico está a conectar-se aos servidores. Por favor, tente novamente em alguns instantes.'
       );
       return;
     }
@@ -651,17 +648,6 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ onNavigate, showToast 
 
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setShowApiKeyModal(true)}
-            className={`flex size-9 items-center justify-center rounded-full transition-colors ${
-              hasDirectApiKey
-                ? 'text-sacred-brand dark:text-sacred-neon hover:bg-sacred-brand/10'
-                : 'text-amber-500 hover:bg-amber-500/10'
-            }`}
-            title="Configurar chave de API Gemini"
-          >
-            <span className="material-symbols-outlined text-lg">key</span>
-          </button>
-          <button
             onClick={startNewConversation}
             className="flex size-9 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-white/10"
             title="Nova conversa"
@@ -951,86 +937,6 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ onNavigate, showToast 
           {composer}
         </div>
       </div>
-
-      {/* ─── MODAL DE CONFIGURAÇÃO DA CHAVE API GEMINI ─── */}
-      {showApiKeyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in text-left">
-          <div className="w-full max-w-sm rounded-3xl bg-white dark:bg-[#12121a] p-5 shadow-2xl border border-slate-200 dark:border-white/10 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-sacred-brand dark:text-sacred-neon text-xl">
-                  key
-                </span>
-                <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-                  Chave de API do Gemini
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowApiKeyModal(false)}
-                className="size-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              Para o Assistente Teológico responder diretamente com o modelo <strong>Gemini 2.0 Flash</strong>, cole a sua chave abaixo.
-            </p>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Google Gemini API Key
-              </label>
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="AIzaSy..."
-                className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-sacred-brand dark:focus:border-sacred-neon font-mono"
-              />
-            </div>
-
-            <div className="rounded-xl bg-slate-50 dark:bg-white/5 p-3 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-              <p className="font-semibold text-slate-700 dark:text-slate-200">
-                💬 Dica Simples:
-              </p>
-              <p>
-                Você também pode simplesmente <strong>enviar a sua chave no chat do Antigravity</strong> que nós configuramos automaticamente no projeto!
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 pt-1">
-              {apiKeyInput && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCustomGeminiApiKey('');
-                    setApiKeyInput('');
-                    showToast('Chave de API removida.');
-                  }}
-                  className="flex-1 py-2 rounded-xl border border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 text-xs font-bold hover:bg-red-50 dark:hover:bg-red-950/20"
-                >
-                  Remover
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  const clean = apiKeyInput.trim();
-                  setCustomGeminiApiKey(clean);
-                  setShowApiKeyModal(false);
-                  if (clean) {
-                    showToast('Chave de API salva com sucesso!', 'check_circle');
-                  }
-                }}
-                className="flex-1 btn-duo-primary dark:btn-duo-primary-dark py-2 text-xs font-extrabold"
-              >
-                Salvar Chave
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Tutorial Guiado da IA Assistente (Spotlight) */}
       <TutorialSpotlight
