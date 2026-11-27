@@ -106,11 +106,11 @@ export const RewardModal: React.FC<RewardModalProps> = ({
                 emoji_events
               </span>
             </div>
-            <span className="material-symbols-outlined text-gold-radiant absolute -top-1 -right-2 text-lg animate-bounce">
-              spark
+            <span className="material-symbols-outlined text-gold-radiant absolute -top-1 -right-2 text-xl animate-bounce">
+              auto_awesome
             </span>
-            <span className="material-symbols-outlined text-sacred-neon absolute bottom-0 -left-2 text-base animate-pulse">
-              spark
+            <span className="material-symbols-outlined text-sacred-neon absolute bottom-0 -left-2 text-lg animate-pulse">
+              auto_awesome
             </span>
           </div>
 

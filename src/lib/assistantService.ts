@@ -56,7 +56,6 @@ interface ReadingContext {
 
 const CACHED_CONVERSATIONS_KEY = 'biblia_ai_cached_conversations';
 export const CUSTOM_GEMINI_KEY_STORAGE = 'biblia_custom_gemini_api_key';
-const DEFAULT_GEMINI_KEY = 'AIzaSyBKAtSSV0gIPldQfZS1MTUC1sRSUqofiXg';
 
 export function getEffectiveGeminiApiKey(): string {
   const envKey = (import.meta.env.VITE_GEMINI_API_KEY as string)?.trim();
@@ -67,7 +66,7 @@ export function getEffectiveGeminiApiKey(): string {
   } catch {
     // ignore
   }
-  return DEFAULT_GEMINI_KEY;
+  return '';
 }
 
 export function setCustomGeminiApiKey(key: string): void {
@@ -454,9 +453,68 @@ export async function askAssistant(
       ? { book: lastRead.book, chapter: lastRead.chapter, verse: lastRead.verse }
       : undefined;
 
-  // 1. Se temos chave direta do Gemini configurada, utiliza-a diretamente com máxima performance
+  // 1. Se temos chave direta do Gemini configurada localmente, utiliza-a diretamente com máxima performance
   if (directApiKey) {
     return await callDirectGemini(directApiKey, question, readingContext, conversationId, history, userId, planTier);
+  }
+
+  // 2. Chamada ao endpoint serverless seguro /api/assistant (onde a chave GEMINI_API_KEY fica protegida no servidor)
+  try {
+    const apiRes = await fetch('/api/assistant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, readingContext, conversationId, history }),
+    });
+
+    if (apiRes.ok) {
+      const apiData = await apiRes.json();
+      if (apiData?.rawText) {
+        const parsed = parseAssistantJsonResponse(apiData.rawText);
+        const convId = conversationId || `conv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+        // Persistência assíncrona no Supabase se autenticado
+        try {
+          if (userId) {
+            await supabase.from('ai_conversations').upsert(
+              { id: convId, user_id: userId, title: question.slice(0, 40), updated_at: new Date().toISOString() },
+              { onConflict: 'id' }
+            );
+            await supabase.from('ai_messages').insert([
+              { conversation_id: convId, user_id: userId, role: 'user', content: question },
+              {
+                conversation_id: convId,
+                user_id: userId,
+                role: 'assistant',
+                content: parsed.answer,
+                kind: parsed.kind || 'study',
+                references: parsed.references || [],
+                interpretation_note: parsed.interpretationNote || null,
+                safety_note: parsed.safetyNote || null,
+              },
+            ]);
+          }
+        } catch {
+          // não-fatal
+        }
+
+        const updatedQuota = recordSuccessfulConsultation(userId, planTier);
+        return {
+          answer: parsed.answer,
+          kind: parsed.kind || 'study',
+          references: await resolveAssistantReferences(asReferences(parsed.references)),
+          suggestedQuestions: parsed.suggestedQuestions,
+          interpretationNote: parsed.interpretationNote,
+          safetyNote: parsed.safetyNote,
+          conversationId: convId,
+          usage: {
+            remainingToday: updatedQuota.remainingToday,
+            limit: updatedQuota.limit,
+          },
+        };
+      }
+    }
+  } catch {
+    // segue para fallback do Supabase
   }
 
   // Nomes canónicos com fallback estrito apenas sob 404

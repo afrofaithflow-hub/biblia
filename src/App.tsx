@@ -234,7 +234,57 @@ const AppContent: React.FC = () => {
   }, [user?.id]);
 
   const activeTab = getActiveTab(currentScreen);
-  const showBottomNav = !FULLSCREEN_MODES.has(currentScreen);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  // Oculta a barra de navegação inferior quando o teclado virtual móvel estiver ativo
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        setIsKeyboardOpen(true);
+      }
+    };
+
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        const active = document.activeElement as HTMLElement | null;
+        if (
+          !active ||
+          (active.tagName !== 'INPUT' &&
+            active.tagName !== 'TEXTAREA' &&
+            !active.isContentEditable)
+        ) {
+          setIsKeyboardOpen(false);
+        }
+      }, 80);
+    };
+
+    const handleViewportResize = () => {
+      if (window.visualViewport) {
+        const isShrunk = window.visualViewport.height < window.innerHeight * 0.78;
+        setIsKeyboardOpen((prev) => (isShrunk !== prev ? isShrunk : prev));
+      }
+    };
+
+    window.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('focusout', handleFocusOut);
+    window.visualViewport?.addEventListener('resize', handleViewportResize);
+
+    return () => {
+      window.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('focusout', handleFocusOut);
+      window.visualViewport?.removeEventListener('resize', handleViewportResize);
+    };
+  }, []);
+
+  const showBottomNav = !FULLSCREEN_MODES.has(currentScreen) && !isKeyboardOpen;
 
   // Sincronização canônica de jogo (G3 Supabase Offline-First)
   useEffect(() => {

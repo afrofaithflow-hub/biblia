@@ -1321,3 +1321,19 @@ Engenharia Antigravity — 17 de Novembro de 2026, 02:10 (Africa/Maputo)
      - Botão do avatar configurado com `shrink-0 aspect-square rounded-full self-center overflow-hidden`.
 - **Validação:** Compilação de produção bem-sucedida (`tsc -b && vite build` em 6.66s, 0 erros).
 - **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 20:35 (Africa/Maputo).
+
+
+---
+
+### [27/11/2026 - 22:30] IMPLEMENTAÇÃO DOS 3 AJUSTES APROVADOS (API, NAVBAR E ÍCONES)
+- **1. Resolução do Erro da API Gemini (Secret Leaked):**
+  - Criado o endpoint serverless seguro `api/assistant.ts` que executa no servidor Node.js/Vercel lendo `process.env.GEMINI_API_KEY`.
+  - Removida a chave estática do código-fonte em `src/lib/assistantService.ts`. O cliente nunca mais expõe chaves no bundle público nem no Git.
+  - `src/lib/assistantService.ts` atualizado para consumir o endpoint `/api/assistant` com fallback para Supabase Edge Functions.
+- **2. Ocultação da Barra Inferior com Teclado Aberto:**
+  - Adicionado em `src/App.tsx` detector de foco (`focusin`/`focusout` em inputs/textareas) e monitorização de altura via `window.visualViewport`.
+  - A Barra Inferior (`bottom-navigation`) oculta-se automaticamente enquanto o teclado móvel estiver visível, liberando 100% do espaço de tela para leitura e digitação, e retorna de imediato ao fechar o teclado.
+- **3. Correção dos Ícones "RK" no Modal de Bênçãos:**
+  - Substituído o identificador não reconhecido `"spark"` pelo ícone canônico do Google Material Symbols `"auto_awesome"` em `src/components/gamification/RewardModal.tsx`.
+- **Validação:** Compilação de produção aprovada com êxito (`tsc -b && vite build` em 11.72s, zero erros).
+- **Assinatura:** Antigravity AI Engine — 27 de Novembro de 2026, 22:30 (Africa/Maputo).
