@@ -26,7 +26,7 @@ export default async function handler(req: any, res: any) {
 
     const apiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '').trim();
 
-    // ── CAMINHO 1: Chave configurada diretamente no Vercel (Latência Mínima) ──
+    // ── CAMINHO 1: Chave configurada no Vercel (Environment Variables) ──
     if (apiKey) {
       const contextualQuestion = readingContext
         ? `${question}\n\nA pessoa estava a ler ${readingContext.book} ${readingContext.chapter}:${readingContext.verse}. Use essa referência apenas como ponto de partida; não atribua a ela palavras que não tenha certeza de que constam no texto.`
@@ -46,9 +46,10 @@ Responda sempre em JSON estrito com os campos:
 
       const candidateModels = [
         process.env.VITE_GEMINI_MODEL,
-        'gemini-2.5-flash',
-        'gemini-2.0-flash',
-        'gemini-1.5-flash',
+        'gemini-3.5-flash',
+        'gemini-3.5-flash-lite',
+        'gemini-3.6-flash',
+        'gemini-flash-lite-latest',
       ].filter(Boolean) as string[];
 
       const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];

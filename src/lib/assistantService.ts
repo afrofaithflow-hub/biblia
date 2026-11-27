@@ -59,14 +59,14 @@ export const CUSTOM_GEMINI_KEY_STORAGE = 'biblia_custom_gemini_api_key';
 
 export function getEffectiveGeminiApiKey(): string {
   const envKey = (import.meta.env.VITE_GEMINI_API_KEY as string)?.trim();
-  if (envKey) return envKey;
+  if (envKey && !envKey.startsWith('AIzaSyBKAtSSV0gIPldQfZS1MTUC1sRSUqofiXg')) return envKey;
   try {
     const custom = localStorage.getItem(CUSTOM_GEMINI_KEY_STORAGE)?.trim();
-    if (custom) return custom;
+    if (custom && !custom.startsWith('AIzaSyBKAtSSV0gIPldQfZS1MTUC1sRSUqofiXg')) return custom;
   } catch {
     // ignore
   }
-  return '';
+  return envKey || '';
 }
 
 export function setCustomGeminiApiKey(key: string): void {
@@ -272,8 +272,9 @@ async function callDirectGemini(
     configuredModel,
     'gemini-3.5-flash',
     'gemini-3.5-flash-lite',
+    'gemini-3.6-flash',
+    'gemini-flash-lite-latest',
     'gemini-3.8-flash',
-    'gemini-flash-latest',
   ].filter(Boolean) as string[];
 
   const uniqueModels = Array.from(new Set(CANDIDATE_MODELS));
