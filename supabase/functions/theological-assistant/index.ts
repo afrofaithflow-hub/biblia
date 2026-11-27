@@ -23,10 +23,8 @@ const normalise = (value: string) => value.normalize('NFD').replace(/[\u0300-\u0
 const json = (body: unknown, status: number, cors: HeadersInit) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 function corsHeaders(origin: string | null): HeadersInit {
-  const configured = (Deno.env.get('AI_ALLOWED_ORIGINS') || 'http://localhost:5173').split(',').map((entry) => entry.trim()).filter(Boolean);
-  const allowedOrigin = origin && configured.includes(origin) ? origin : configured[0];
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': origin || '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Vary': 'Origin',

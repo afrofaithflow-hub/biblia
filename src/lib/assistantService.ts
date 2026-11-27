@@ -129,6 +129,9 @@ export function isFunctionNotFoundError(error: unknown): boolean {
  */
 async function extractEdgeFunctionErrorMessage(error: any): Promise<{ message: string; status?: number }> {
   let message = error?.message || 'Não foi possível consultar o Assistente agora.';
+  if (message.includes('Failed to send a request to the Edge Function')) {
+    message = 'O Assistente Teológico está a sincronizar com os servidores seguros. Por favor, tente novamente em alguns instantes.';
+  }
   const status = error?.context?.status ?? error?.status;
 
   if (error?.context && typeof error.context.json === 'function') {
